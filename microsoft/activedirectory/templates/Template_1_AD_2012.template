@@ -2430,7 +2430,7 @@
                         "FromPort"   : "53",
                         "ToPort"     : "53",
                         "CidrIp"     : {
-                            "Ref" : "PrivSub2CIDR"
+                            "Ref" : "VPCCIDR"
                         }
                     },
                     {
@@ -2438,7 +2438,7 @@
                         "FromPort"   : "53",
                         "ToPort"     : "53",
                         "CidrIp"     : {
-                            "Ref" : "PrivSub2CIDR"
+                            "Ref" : "VPCCIDR"
                         }
                     },
                     {
@@ -2825,7 +2825,7 @@
                         "FromPort"   : "53",
                         "ToPort"     : "53",
                         "CidrIp"     : {
-                            "Ref" : "PrivSub1CIDR"
+                            "Ref" : "VPCCIDR"
                         }
                     },
                     {
@@ -2833,7 +2833,7 @@
                         "FromPort"   : "53",
                         "ToPort"     : "53",
                         "CidrIp"     : {
-                            "Ref" : "PrivSub1CIDR"
+                            "Ref" : "VPCCIDR"
                         }
                     },
                     {

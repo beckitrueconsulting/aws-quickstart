@@ -77,3 +77,5 @@ Configuration CertificateAuthority {
 CertificateAuthority -ConfigurationData $ConfigurationData
 Start-DscConfiguration -Path .\CertificateAuthority -Wait -Verbose -Force
 Get-ChildItem .\CertificateAuthority *.mof -ErrorAction SilentlyContinue | Remove-Item -Confirm:$false -ErrorAction SilentlyContinue
+
+Get-ChildItem C:\Windows\system32\CertSrv\CertEnroll *.crt | Copy-Item -Destination c:\inetpub\wwwroot\cert.crt
