@@ -1,0 +1,1516 @@
+{
+    "AWSTemplateFormatVersion" : "2010-09-09",
+    "Description"              : "(0012) - This template deploys two Web Application Proxy servers into public subnets in each availability zone, as well as two ADFS servers into the private subnets in each availability zone. **WARNING** This template creates Amazon EC2 Windows instance and related resources. You will be billed for the AWS resources used if you create a stack from this template.",
+    "Parameters"               : {
+        "KeyPairName" : {
+            "Description" : "Public/private key pairs allow you to securely connect to your instance after it launches",
+            "Type"        : "AWS::EC2::KeyPair::KeyName"
+        },
+        "InstanceType" : {
+            "Description" : "Amazon EC2 instance type for the WAP and ADFS Servers",
+            "Type"        : "String",
+            "Default"     : "c4.2xlarge",
+            "AllowedValues" : [
+                "c4.2xlarge"
+            ],
+            "ConstraintDescription" : "Only EBS Optimized instance types r3.xlarge, r3.2xlarge, r3.4xlarge allowed"
+        },
+        "DomainDNSName" : {
+            "Description" : "Fully qualified domain name (FQDN) of the forest root domain e.g. corp.example.com",
+            "Type"        : "String",
+            "Default"     : "example.com",
+            "MinLength"   : "3",
+            "MaxLength"   : "25",
+            "AllowedPattern" : "[a-zA-Z0-9]+\\..+"
+        },
+        "DomainNetBIOSName" : {
+            "Description" : "NetBIOS name of the domain (upto 15 characters) for users of earlier versions of Windows e.g. CORP",
+            "Type"        : "String",
+            "Default"     : "example",
+            "MinLength"   : "1",
+            "MaxLength"   : "15",
+            "AllowedPattern" : "[a-zA-Z0-9]+"
+        },
+        "ADServerNetBIOSName1" : {
+            "Description" : "NetBIOS name of the existing Domain Controller in AZ1",
+            "Type"        : "String",
+            "Default"     : "DC1",
+            "MinLength"   : "1",
+            "MaxLength"   : "15",
+            "AllowedPattern" : "[a-zA-Z0-9]+"
+        },
+        "ADServerNetBIOSName2" : {
+            "Description" : "NetBIOS name of the existing Domain Controller in AZ2",
+            "Type"        : "String",
+            "Default"     : "DC2",
+            "MinLength"   : "1",
+            "MaxLength"   : "15",
+            "AllowedPattern" : "[a-zA-Z0-9]+"
+        },
+        "DomainAdminUser"      : {
+            "Description" : "User name for the account that will be added as Domain Administrator. This is separate from the default \"Administrator\" account",
+            "Type"        : "String",
+            "Default"     : "StackAdmin",
+            "MinLength"   : "5",
+            "MaxLength"   : "25",
+            "AllowedPattern" : "[a-zA-Z0-9]*"
+        },
+        "DomainAdminPassword"  : {
+            "Description" : "Password for the domain admin user. Must be at least 8 characters containing letters, numbers and symbols",
+            "Type"        : "String",
+            "MinLength"   : "8",
+            "MaxLength"   : "32",
+            "AllowedPattern" : "(?=^.{6,255}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
+            "NoEcho"         : "true",
+            "Default"        : "Password123"
+        },
+        "ADServer1PrivateIp"   : {
+            "Description" : "Fixed private IP for the first existing Active Directory server located in AZ1",
+            "Type"        : "String",
+            "Default"     : "10.0.0.10"
+        },
+        "ADServer2PrivateIp"   : {
+            "Description" : "Fixed private IP for the second existing Active Directory serverr located in AZ2",
+            "Type"        : "String",
+            "Default"     : "10.0.64.10"
+        },
+        "DomainMemberSGID"     : {
+            "Description" : "ID of the Domain Member Security Group (e.g., sg-7f16e910)",
+            "Type"        : "AWS::EC2::SecurityGroup::Id"
+        },
+        "VPC"                  : {
+            "Description" : "ID of the VPC (e.g., vpc-0343606e)",
+            "Type"        : "AWS::EC2::VPC::Id"
+        },
+        "PrivateSubnet1Id"     : {
+            "Description" : "ID of the subnet you want to provision the first Exchange Server into (e.g., subnet-a0246dcd)",
+            "Type"        : "AWS::EC2::Subnet::Id"
+        },
+        "PrivateSubnet2Id"     : {
+            "Description" : "ID of the subnet you want to provision the second Exchange Server into (e.g., subnet-e3246d8e)",
+            "Type"        : "AWS::EC2::Subnet::Id"
+        },
+        "PublicSubnet1Id"      : {
+            "Description" : "ID of the public subnet you want to provision the first Edge Server into (e.g., subnet-a0246dcd)",
+            "Type"        : "AWS::EC2::Subnet::Id"
+        },
+        "PublicSubnet2Id"      : {
+            "Description" : "ID of the public subnet you want to provision the second Edge Server into (e.g., subnet-e3246d8e)",
+            "Type"        : "AWS::EC2::Subnet::Id"
+        },
+        "VPCCIDR"              : {
+            "Description" : "CIDR Block used by the VPC",
+            "Type"        : "String",
+            "Default"     : "10.0.0.0/16",
+            "AllowedPattern" : "[a-zA-Z0-9]+\\..+"
+        }
+    },
+    "Mappings"                 : {
+        "AWSInstanceType2Arch" : {
+            "m1.small" : {
+                "Arch" : "64"
+            },
+            "m1.medium" : {
+                "Arch" : "64"
+            },
+            "m1.large"  : {
+                "Arch" : "64"
+            },
+            "m2.xlarge" : {
+                "Arch" : "64"
+            },
+            "m4.xlarge" : {
+                "Arch" : "64"
+            },
+            "m2.2xlarge" : {
+                "Arch" : "64"
+            },
+            "m2.4xlarge" : {
+                "Arch" : "64"
+            },
+            "m3.medium"  : {
+                "Arch" : "64"
+            },
+            "m3.large"   : {
+                "Arch" : "64"
+            },
+            "m3.xlarge"  : {
+                "Arch" : "64"
+            },
+            "m3.2xlarge" : {
+                "Arch" : "64"
+            },
+            "r3.xlarge"  : {
+                "Arch" : "64"
+            },
+            "r3.2xlarge" : {
+                "Arch" : "64"
+            },
+            "r3.4xlarge" : {
+                "Arch" : "64"
+            },
+            "c1.medium"  : {
+                "Arch" : "64"
+            },
+            "c1.xlarge"  : {
+                "Arch" : "64"
+            },
+            "c4.2xlarge" : {
+                "Arch" : "64"
+            }
+        },
+        "AWSRegionArch2AMI"    : {
+            "us-east-1" : {
+                "64" : "ami-f70cdd9c"
+            },
+            "us-west-2" : {
+                "64" : "ami-c3b3b1f3"
+            },
+            "us-west-1" : {
+                "64" : "ami-3bee1c7f"
+            },
+            "eu-west-1" : {
+                "64" : "ami-68347d1f"
+            },
+            "eu-central-1" : {
+                "64" : "ami-f64540eb"
+            },
+            "ap-southeast-1" : {
+                "64" : "ami-b89093ea"
+            },
+            "ap-northeast-1" : {
+                "64" : "ami-e69520e6"
+            },
+            "sa-east-1"      : {
+                "64" : "ami-87f8779a"
+            },
+            "ap-southeast-2" : {
+                "64" : "ami-2d2d6b17"
+            }
+        }
+    },
+    "Resources"                : {
+        "WAP1EIP" : {
+            "Type" : "AWS::EC2::EIP",
+            "Properties" : {
+                "Domain" : "vpc"
+            }
+        },
+        "WAP2EIP" : {
+            "Type" : "AWS::EC2::EIP",
+            "Properties" : {
+                "Domain" : "vpc"
+            }
+        },
+        "WAP1Interface" : {
+            "Type" : "AWS::EC2::NetworkInterface",
+            "Properties" : {
+                "SubnetId" : {
+                    "Ref" : "PublicSubnet1Id"
+                },
+                "Description" : "WAP1 network interface",
+                "GroupSet"    : [
+                    {
+                        "Ref" : "WAPSecurityGroup"
+                    },
+                    {
+                        "Ref" : "DomainMemberSGID"
+                    }
+                ],
+                "SourceDestCheck" : "true",
+                "Tags"            : [
+                    {
+                        "Key" : "Network",
+                        "Value" : "WAP1Interface"
+                    }
+                ]
+            }
+        },
+        "WAP2Interface" : {
+            "Type" : "AWS::EC2::NetworkInterface",
+            "Properties" : {
+                "SubnetId" : {
+                    "Ref" : "PublicSubnet2Id"
+                },
+                "Description" : "WAP2 network interface",
+                "GroupSet"    : [
+                    {
+                        "Ref" : "WAPSecurityGroup"
+                    },
+                    {
+                        "Ref" : "DomainMemberSGID"
+                    }
+                ],
+                "SourceDestCheck" : "true",
+                "Tags"            : [
+                    {
+                        "Key" : "Network",
+                        "Value" : "WAP2Interface"
+                    }
+                ]
+            }
+        },
+        "AssociateWAP1EIP" : {
+            "Type" : "AWS::EC2::EIPAssociation",
+            "Properties" : {
+                "AllocationId" : {
+                    "Fn::GetAtt" : [
+                        "WAP1EIP",
+                        "AllocationId"
+                    ]
+                },
+                "NetworkInterfaceId" : {
+                    "Ref" : "WAP1Interface"
+                }
+            }
+        },
+        "AssociateWAP2EIP" : {
+            "Type" : "AWS::EC2::EIPAssociation",
+            "Properties" : {
+                "AllocationId" : {
+                    "Fn::GetAtt" : [
+                        "WAP2EIP",
+                        "AllocationId"
+                    ]
+                },
+                "NetworkInterfaceId" : {
+                    "Ref" : "WAP2Interface"
+                }
+            }
+        },
+        "WAP1"             : {
+            "Type" : "AWS::EC2::Instance",
+            "DependsOn" : "ADFS1",
+            "Metadata"  : {
+                "AWS::CloudFormation::Init" : {
+                    "configSets" : {
+                        "config" : [
+                            "setup",
+                            "prep"
+                        ]
+                    },
+                    "setup"      : {
+                        "files" : {
+                            "c:\\cfn\\cfn-hup.conf" : {
+                                "content" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "[main]\n",
+                                            "stack=",
+                                            {
+                                                "Ref" : "AWS::StackId"
+                                            },
+                                            "\n",
+                                            "region=",
+                                            {
+                                                "Ref" : "AWS::Region"
+                                            },
+                                            "\n"
+                                        ]
+                                    ]
+                                }
+                            },
+                            "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf" : {
+                                "content" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "[cfn-auto-reloader-hook]\n",
+                                            "triggers=post.update\n",
+                                            "path=Resources.WAP1.Metadata.AWS::CloudFormation::Init\n",
+                                            "action=cfn-init.exe -v -s ",
+                                            {
+                                                "Ref" : "AWS::StackId"
+                                            },
+                                            " -r WAP1",
+                                            " --region ",
+                                            {
+                                                "Ref" : "AWS::Region"
+                                            },
+                                            "\n"
+                                        ]
+                                    ]
+                                }
+                            },
+                            "c:\\cfn\\scripts\\Unzip-Archive.ps1"      : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/scripts/Unzip-Archive.ps1"
+                            },
+                            "c:\\cfn\\modules\\AWSQuickStart.zip"      : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/modules/AWSQuickStart.zip"
+                            },
+                            "c:\\cfn\\scripts\\Join-Domain.ps1"        : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/scripts/Join-Domain.ps1"
+                            },
+                            "c:\\cfn\\scripts\\Install-WAP.ps1"        : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/wapadfs/latest/scripts/Install-WAP.ps1"
+                            }
+                        },
+                        "commands" : {
+                            "a-set-execution-policy" : {
+                                "command" : "powershell.exe -command Set-ExecutionPolicy RemoteSigned -Force",
+                                "waitAfterCompletion" : "0"
+                            },
+                            "b-unpack-quickstart-module" : {
+                                "command" : "powershell.exe -command c:\\cfn\\scripts\\Unzip-Archive.ps1 -Source c:\\cfn\\modules\\AWSQuickStart.zip -Destination C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules\\",
+                                "waitAfterCompletion" : "0"
+                            },
+                            "c-init-quickstart-module"   : {
+                                "command" : "powershell.exe -command New-AWSQuickStartWaitHandle -Handle WAP1",
+                                "waitAfterCompletion" : "0"
+                            }
+                        },
+                        "services" : {
+                            "windows" : {
+                                "cfn-hup" : {
+                                    "enabled" : "true",
+                                    "ensureRunning" : "true",
+                                    "files"         : [
+                                        "c:\\cfn\\cfn-hup.conf",
+                                        "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "prep"       : {
+                        "commands" : {
+                            "a-disable-win-fw" : {
+                                "command" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "powershell.exe -Command \"Get-NetFirewallProfile | Set-NetFirewallProfile -Enabled False\""
+                                        ]
+                                    ]
+                                },
+                                "waitAfterCompletion" : "0"
+                            },
+                            "b-rename-computer" : {
+                                "command" : "powershell.exe -Command Rename-Computer -NewName WAP1 -Restart",
+                                "waitAfterCompletion" : "forever"
+                            },
+                            "c-set-dns-servers" : {
+                                "command" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "powershell.exe -Command ",
+                                            "\"",
+                                            "Get-NetAdapter | Set-DnsClientServerAddress -ServerAddresses ",
+                                            {
+                                                "Ref" : "ADServer1PrivateIp"
+                                            },
+                                            ",",
+                                            {
+                                                "Ref" : "ADServer2PrivateIp"
+                                            },
+                                            "\""
+                                        ]
+                                    ]
+                                },
+                                "waitAfterCompletion" : "30"
+                            },
+                            "d-join-domain"     : {
+                                "command" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "powershell.exe -Command c:\\cfn\\scripts\\Join-Domain.ps1 -DomainName ",
+                                            {
+                                                "Ref" : "DomainDNSName"
+                                            },
+                                            " -UserName ",
+                                            {
+                                                "Ref" : "DomainNetBIOSName"
+                                            },
+                                            "\\",
+                                            {
+                                                "Ref" : "DomainAdminUser"
+                                            },
+                                            " -Password ",
+                                            {
+                                                "Ref" : "DomainAdminPassword"
+                                            }
+                                        ]
+                                    ]
+                                },
+                                "waitAfterCompletion" : "forever"
+                            },
+                            "e-install-wap"     : {
+                                "command" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "powershell.exe -Command c:\\cfn\\scripts\\Install-WAP.ps1 -DomainDNSName ",
+                                            {
+                                                "Ref" : "DomainDNSName"
+                                            },
+                                            " -DCName ",
+                                            {
+                                                "Ref" : "ADServerNetBIOSName1"
+                                            },
+                                            " -DomainNetBIOSName ",
+                                            {
+                                                "Ref" : "DomainNetBIOSName"
+                                            },
+                                            " -UserName ",
+                                            {
+                                                "Ref" : "DomainAdminUser"
+                                            },
+                                            " -Password ",
+                                            {
+                                                "Ref" : "DomainAdminPassword"
+                                            }
+                                        ]
+                                    ]
+                                },
+                                "waitAfterCompletion" : "0"
+                            }
+                        }
+                    }
+                }
+            },
+            "Properties" : {
+                "ImageId" : {
+                    "Fn::FindInMap" : [
+                        "AWSRegionArch2AMI",
+                        {
+                            "Ref" : "AWS::Region"
+                        },
+                        {
+                            "Fn::FindInMap" : [
+                                "AWSInstanceType2Arch",
+                                {
+                                    "Ref" : "InstanceType"
+                                },
+                                "Arch"
+                            ]
+                        }
+                    ]
+                },
+                "InstanceType" : {
+                    "Ref" : "InstanceType"
+                },
+                "EbsOptimized" : "true",
+                "NetworkInterfaces" : [
+                    {
+                        "NetworkInterfaceId" : {
+                            "Ref" : "WAP1Interface"
+                        },
+                        "DeviceIndex"        : "0"
+                    }
+                ],
+                "Tags"              : [
+                    {
+                        "Key" : "Name",
+                        "Value" : "WAP1"
+                    }
+                ],
+                "BlockDeviceMappings" : [
+                    {
+                        "DeviceName" : "/dev/sda1",
+                        "Ebs"        : {
+                            "VolumeSize" : "100",
+                            "VolumeType" : "gp2"
+                        }
+                    },
+                    {
+                        "DeviceName" : "/dev/xvdb",
+                        "VirtualName" : "ephemeral0"
+                    }
+                ],
+                "KeyName"             : {
+                    "Ref" : "KeyPairName"
+                },
+                "UserData"            : {
+                    "Fn::Base64" : {
+                        "Fn::Join" : [
+                            "",
+                            [
+                                "<script>\n",
+                                "cfn-init.exe -v -c config -s ",
+                                {
+                                    "Ref" : "AWS::StackId"
+                                },
+                                " -r WAP1 ",
+                                " --region ",
+                                {
+                                    "Ref" : "AWS::Region"
+                                },
+                                "\n",
+                                "</script>"
+                            ]
+                        ]
+                    }
+                }
+            },
+            "CreationPolicy" : {
+                "ResourceSignal" : {
+                    "Count" : "1",
+                    "Timeout" : "PT75M"
+                }
+            }
+        },
+        "WAP2"             : {
+            "Type" : "AWS::EC2::Instance",
+            "DependsOn" : "ADFS1",
+            "Metadata"  : {
+                "AWS::CloudFormation::Init" : {
+                    "configSets" : {
+                        "config" : [
+                            "setup",
+                            "prep"
+                        ]
+                    },
+                    "setup"      : {
+                        "files" : {
+                            "c:\\cfn\\cfn-hup.conf" : {
+                                "content" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "[main]\n",
+                                            "stack=",
+                                            {
+                                                "Ref" : "AWS::StackId"
+                                            },
+                                            "\n",
+                                            "region=",
+                                            {
+                                                "Ref" : "AWS::Region"
+                                            },
+                                            "\n"
+                                        ]
+                                    ]
+                                }
+                            },
+                            "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf" : {
+                                "content" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "[cfn-auto-reloader-hook]\n",
+                                            "triggers=post.update\n",
+                                            "path=Resources.WAP2.Metadata.AWS::CloudFormation::Init\n",
+                                            "action=cfn-init.exe -v -s ",
+                                            {
+                                                "Ref" : "AWS::StackId"
+                                            },
+                                            " -r WAP2",
+                                            " --region ",
+                                            {
+                                                "Ref" : "AWS::Region"
+                                            },
+                                            "\n"
+                                        ]
+                                    ]
+                                }
+                            },
+                            "c:\\cfn\\scripts\\Unzip-Archive.ps1"      : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/scripts/Unzip-Archive.ps1"
+                            },
+                            "c:\\cfn\\modules\\AWSQuickStart.zip"      : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/modules/AWSQuickStart.zip"
+                            },
+                            "c:\\cfn\\scripts\\Join-Domain.ps1"        : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/scripts/Join-Domain.ps1"
+                            },
+                            "c:\\cfn\\scripts\\Install-WAP.ps1"        : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/wapadfs/latest/scripts/Install-WAP.ps1"
+                            }
+                        },
+                        "commands" : {
+                            "a-set-execution-policy" : {
+                                "command" : "powershell.exe -command Set-ExecutionPolicy RemoteSigned -Force",
+                                "waitAfterCompletion" : "0"
+                            },
+                            "b-unpack-quickstart-module" : {
+                                "command" : "powershell.exe -command c:\\cfn\\scripts\\Unzip-Archive.ps1 -Source c:\\cfn\\modules\\AWSQuickStart.zip -Destination C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules\\",
+                                "waitAfterCompletion" : "0"
+                            },
+                            "c-init-quickstart-module"   : {
+                                "command" : "powershell.exe -command New-AWSQuickStartWaitHandle -Handle WAP2",
+                                "waitAfterCompletion" : "0"
+                            }
+                        },
+                        "services" : {
+                            "windows" : {
+                                "cfn-hup" : {
+                                    "enabled" : "true",
+                                    "ensureRunning" : "true",
+                                    "files"         : [
+                                        "c:\\cfn\\cfn-hup.conf",
+                                        "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "prep"       : {
+                        "commands" : {
+                            "a-disable-win-fw" : {
+                                "command" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "powershell.exe -Command \"Get-NetFirewallProfile | Set-NetFirewallProfile -Enabled False\""
+                                        ]
+                                    ]
+                                },
+                                "waitAfterCompletion" : "0"
+                            },
+                            "b-rename-computer" : {
+                                "command" : "powershell.exe -Command Rename-Computer -NewName WAP2 -Restart",
+                                "waitAfterCompletion" : "forever"
+                            },
+                            "c-set-dns-servers" : {
+                                "command" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "powershell.exe -Command ",
+                                            "\"",
+                                            "Get-NetAdapter | Set-DnsClientServerAddress -ServerAddresses ",
+                                            {
+                                                "Ref" : "ADServer2PrivateIp"
+                                            },
+                                            ",",
+                                            {
+                                                "Ref" : "ADServer1PrivateIp"
+                                            },
+                                            "\""
+                                        ]
+                                    ]
+                                },
+                                "waitAfterCompletion" : "30"
+                            },
+                            "d-join-domain"     : {
+                                "command" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "powershell.exe -Command c:\\cfn\\scripts\\Join-Domain.ps1 -DomainName ",
+                                            {
+                                                "Ref" : "DomainDNSName"
+                                            },
+                                            " -UserName ",
+                                            {
+                                                "Ref" : "DomainNetBIOSName"
+                                            },
+                                            "\\",
+                                            {
+                                                "Ref" : "DomainAdminUser"
+                                            },
+                                            " -Password ",
+                                            {
+                                                "Ref" : "DomainAdminPassword"
+                                            }
+                                        ]
+                                    ]
+                                },
+                                "waitAfterCompletion" : "forever"
+                            },
+                            "e-install-wap"     : {
+                                "command" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "powershell.exe -Command c:\\cfn\\scripts\\Install-WAP.ps1 -DomainDNSName ",
+                                            {
+                                                "Ref" : "DomainDNSName"
+                                            },
+                                            " -DCName ",
+                                            {
+                                                "Ref" : "ADServerNetBIOSName1"
+                                            },
+                                            " -DomainNetBIOSName ",
+                                            {
+                                                "Ref" : "DomainNetBIOSName"
+                                            },
+                                            " -UserName ",
+                                            {
+                                                "Ref" : "DomainAdminUser"
+                                            },
+                                            " -Password ",
+                                            {
+                                                "Ref" : "DomainAdminPassword"
+                                            }
+                                        ]
+                                    ]
+                                },
+                                "waitAfterCompletion" : "0"
+                            }
+                        }
+                    }
+                }
+            },
+            "Properties" : {
+                "ImageId" : {
+                    "Fn::FindInMap" : [
+                        "AWSRegionArch2AMI",
+                        {
+                            "Ref" : "AWS::Region"
+                        },
+                        {
+                            "Fn::FindInMap" : [
+                                "AWSInstanceType2Arch",
+                                {
+                                    "Ref" : "InstanceType"
+                                },
+                                "Arch"
+                            ]
+                        }
+                    ]
+                },
+                "InstanceType" : {
+                    "Ref" : "InstanceType"
+                },
+                "EbsOptimized" : "true",
+                "NetworkInterfaces" : [
+                    {
+                        "NetworkInterfaceId" : {
+                            "Ref" : "WAP2Interface"
+                        },
+                        "DeviceIndex"        : "0"
+                    }
+                ],
+                "Tags"              : [
+                    {
+                        "Key" : "Name",
+                        "Value" : "WAP2"
+                    }
+                ],
+                "BlockDeviceMappings" : [
+                    {
+                        "DeviceName" : "/dev/sda1",
+                        "Ebs"        : {
+                            "VolumeSize" : "100",
+                            "VolumeType" : "gp2"
+                        }
+                    },
+                    {
+                        "DeviceName" : "/dev/xvdb",
+                        "VirtualName" : "ephemeral0"
+                    }
+                ],
+                "KeyName"             : {
+                    "Ref" : "KeyPairName"
+                },
+                "UserData"            : {
+                    "Fn::Base64" : {
+                        "Fn::Join" : [
+                            "",
+                            [
+                                "<script>\n",
+                                "cfn-init.exe -v -c config -s ",
+                                {
+                                    "Ref" : "AWS::StackId"
+                                },
+                                " -r WAP2 ",
+                                " --region ",
+                                {
+                                    "Ref" : "AWS::Region"
+                                },
+                                "\n",
+                                "</script>"
+                            ]
+                        ]
+                    }
+                }
+            },
+            "CreationPolicy" : {
+                "ResourceSignal" : {
+                    "Count" : "1",
+                    "Timeout" : "PT75M"
+                }
+            }
+        },
+        "ADFS1"            : {
+            "Type" : "AWS::EC2::Instance",
+            "Metadata" : {
+                "AWS::CloudFormation::Init" : {
+                    "configSets" : {
+                        "config" : [
+                            "setup",
+                            "install"
+                        ]
+                    },
+                    "setup"      : {
+                        "files" : {
+                            "c:\\cfn\\cfn-hup.conf" : {
+                                "content" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "[main]\n",
+                                            "stack=",
+                                            {
+                                                "Ref" : "AWS::StackId"
+                                            },
+                                            "\n",
+                                            "region=",
+                                            {
+                                                "Ref" : "AWS::Region"
+                                            },
+                                            "\n"
+                                        ]
+                                    ]
+                                }
+                            },
+                            "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf" : {
+                                "content" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "[cfn-auto-reloader-hook]\n",
+                                            "triggers=post.update\n",
+                                            "path=Resources.ADFS1.Metadata.AWS::CloudFormation::Init\n",
+                                            "action=cfn-init.exe -v -s ",
+                                            {
+                                                "Ref" : "AWS::StackId"
+                                            },
+                                            " -r ADFS1",
+                                            " --region ",
+                                            {
+                                                "Ref" : "AWS::Region"
+                                            },
+                                            "\n"
+                                        ]
+                                    ]
+                                }
+                            },
+                            "c:\\cfn\\scripts\\Unzip-Archive.ps1"      : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/scripts/Unzip-Archive.ps1"
+                            },
+                            "c:\\cfn\\modules\\AWSQuickStart.zip"      : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/modules/AWSQuickStart.zip"
+                            },
+                            "c:\\cfn\\scripts\\Join-Domain.ps1"        : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/scripts/Join-Domain.ps1"
+                            },
+                            "c:\\cfn\\scripts\\Install-ADFS.ps1"       : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/wapadfs/latest/scripts/Install-ADFS.ps1"
+                            },
+                            "c:\\cfn\\scripts\\Disable-AutoLogon.ps1"  : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/exchange/scripts/Disable-AutoLogon.ps1"
+                            },
+                            "c:\\cfn\\scripts\\Enable-AutoLogon.ps1"   : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/exchange/scripts/Enable-AutoLogon.ps1"
+                            },
+                            "c:\\cfn\\scripts\\Install.bat"            : {
+                                "content" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "powershell.exe -Command c:\\cfn\\scripts\\Install-ADFS.ps1 -DomainDNSName ",
+                                            {
+                                                "Ref" : "DomainDNSName"
+                                            },
+                                            " -DCName ",
+                                            {
+                                                "Ref" : "ADServerNetBIOSName1"
+                                            },
+                                            " -DomainNetBIOSName ",
+                                            {
+                                                "Ref" : "DomainNetBIOSName"
+                                            },
+                                            " -UserName ",
+                                            {
+                                                "Ref" : "DomainAdminUser"
+                                            },
+                                            " -Password ",
+                                            {
+                                                "Ref" : "DomainAdminPassword"
+                                            },
+                                            " -FirstServer",
+                                            "\n"
+                                        ]
+                                    ]
+                                }
+                            }
+                        },
+                        "commands" : {
+                            "a-set-execution-policy" : {
+                                "command" : "powershell.exe -command Set-ExecutionPolicy RemoteSigned -Force",
+                                "waitAfterCompletion" : "0"
+                            },
+                            "b-unpack-quickstart-module" : {
+                                "command" : "powershell.exe -command c:\\cfn\\scripts\\Unzip-Archive.ps1 -Source c:\\cfn\\modules\\AWSQuickStart.zip -Destination C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules\\",
+                                "waitAfterCompletion" : "0"
+                            },
+                            "c-init-quickstart-module"   : {
+                                "command" : "powershell.exe -command New-AWSQuickStartWaitHandle -Handle ADFS1",
+                                "waitAfterCompletion" : "0"
+                            }
+                        },
+                        "services" : {
+                            "windows" : {
+                                "cfn-hup" : {
+                                    "enabled" : "true",
+                                    "ensureRunning" : "true",
+                                    "files"         : [
+                                        "c:\\cfn\\cfn-hup.conf",
+                                        "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "install"    : {
+                        "commands" : {
+                            "a-disable-win-fw" : {
+                                "command" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "powershell.exe -Command \"Get-NetFirewallProfile | Set-NetFirewallProfile -Enabled False\""
+                                        ]
+                                    ]
+                                },
+                                "waitAfterCompletion" : "0"
+                            },
+                            "b-rename-computer" : {
+                                "command" : "powershell.exe -Command Rename-Computer -NewName ADFS1 -Restart",
+                                "waitAfterCompletion" : "forever"
+                            },
+                            "c-set-dns-servers" : {
+                                "command" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "powershell.exe -Command ",
+                                            "\"",
+                                            "Get-NetAdapter | Set-DnsClientServerAddress -ServerAddresses ",
+                                            {
+                                                "Ref" : "ADServer1PrivateIp"
+                                            },
+                                            ",",
+                                            {
+                                                "Ref" : "ADServer2PrivateIp"
+                                            },
+                                            "\""
+                                        ]
+                                    ]
+                                },
+                                "waitAfterCompletion" : "30"
+                            },
+                            "d-join-domain"     : {
+                                "command" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "powershell.exe -Command c:\\cfn\\scripts\\Join-Domain.ps1 -DomainName ",
+                                            {
+                                                "Ref" : "DomainDNSName"
+                                            },
+                                            " -UserName ",
+                                            {
+                                                "Ref" : "DomainNetBIOSName"
+                                            },
+                                            "\\",
+                                            {
+                                                "Ref" : "DomainAdminUser"
+                                            },
+                                            " -Password ",
+                                            {
+                                                "Ref" : "DomainAdminPassword"
+                                            }
+                                        ]
+                                    ]
+                                },
+                                "waitAfterCompletion" : "forever"
+                            },
+                            "e-enable-autologon" : {
+                                "command" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "powershell.exe -Command c:\\cfn\\scripts\\Enable-AutoLogon.ps1",
+                                            " -UserName ",
+                                            {
+                                                "Ref" : "DomainNetBIOSName"
+                                            },
+                                            "\\",
+                                            {
+                                                "Ref" : "DomainAdminUser"
+                                            },
+                                            " -Password ",
+                                            {
+                                                "Ref" : "DomainAdminPassword"
+                                            },
+                                            " -StartupScript c:\\cfn\\scripts\\Install.bat"
+                                        ]
+                                    ]
+                                },
+                                "waitAfterCompletion" : "0"
+                            },
+                            "f-reboot"           : {
+                                "command" : "powershell.exe -command Restart-Computer -Force",
+                                "waitAfterCompletion" : "forever"
+                            },
+                            "g-disable-autologon" : {
+                                "command" : "powershell.exe -command c:\\cfn\\scripts\\Disable-AutoLogon.ps1",
+                                "waitAfterCompletion" : "0"
+                            },
+                            "h-wait"              : {
+                                "command" : "powershell.exe -command Start-Sleep -Seconds 1800",
+                                "waitAfterCompletion" : "0"
+                            }
+                        }
+                    }
+                }
+            },
+            "Properties" : {
+                "ImageId" : {
+                    "Fn::FindInMap" : [
+                        "AWSRegionArch2AMI",
+                        {
+                            "Ref" : "AWS::Region"
+                        },
+                        {
+                            "Fn::FindInMap" : [
+                                "AWSInstanceType2Arch",
+                                {
+                                    "Ref" : "InstanceType"
+                                },
+                                "Arch"
+                            ]
+                        }
+                    ]
+                },
+                "InstanceType" : {
+                    "Ref" : "InstanceType"
+                },
+                "EbsOptimized" : "true",
+                "NetworkInterfaces" : [
+                    {
+                        "DeleteOnTermination" : "true",
+                        "DeviceIndex"         : 0,
+                        "SubnetId"            : {
+                            "Ref" : "PrivateSubnet1Id"
+                        },
+                        "GroupSet"            : [
+                            {
+                                "Ref" : "DomainMemberSGID"
+                            },
+                            {
+                                "Ref" : "ADFSSecurityGroup"
+                            }
+                        ]
+                    }
+                ],
+                "Tags"              : [
+                    {
+                        "Key" : "Name",
+                        "Value" : "ADFS1"
+                    }
+                ],
+                "BlockDeviceMappings" : [
+                    {
+                        "DeviceName" : "/dev/sda1",
+                        "Ebs"        : {
+                            "VolumeSize" : "100",
+                            "VolumeType" : "gp2"
+                        }
+                    },
+                    {
+                        "DeviceName" : "/dev/xvdb",
+                        "VirtualName" : "ephemeral0"
+                    }
+                ],
+                "KeyName"             : {
+                    "Ref" : "KeyPairName"
+                },
+                "UserData"            : {
+                    "Fn::Base64" : {
+                        "Fn::Join" : [
+                            "",
+                            [
+                                "<script>\n",
+                                "cfn-init.exe -v -c config -s ",
+                                {
+                                    "Ref" : "AWS::StackId"
+                                },
+                                " -r ADFS1 ",
+                                " --region ",
+                                {
+                                    "Ref" : "AWS::Region"
+                                },
+                                "\n",
+                                "</script>"
+                            ]
+                        ]
+                    }
+                }
+            },
+            "CreationPolicy" : {
+                "ResourceSignal" : {
+                    "Count" : "1",
+                    "Timeout" : "PT75M"
+                }
+            }
+        },
+        "ADFS2"            : {
+            "Type" : "AWS::EC2::Instance",
+            "DependsOn" : "ADFS1",
+            "Metadata"  : {
+                "AWS::CloudFormation::Init" : {
+                    "configSets" : {
+                        "config" : [
+                            "setup",
+                            "install"
+                        ]
+                    },
+                    "setup"      : {
+                        "files" : {
+                            "c:\\cfn\\cfn-hup.conf" : {
+                                "content" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "[main]\n",
+                                            "stack=",
+                                            {
+                                                "Ref" : "AWS::StackId"
+                                            },
+                                            "\n",
+                                            "region=",
+                                            {
+                                                "Ref" : "AWS::Region"
+                                            },
+                                            "\n"
+                                        ]
+                                    ]
+                                }
+                            },
+                            "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf" : {
+                                "content" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "[cfn-auto-reloader-hook]\n",
+                                            "triggers=post.update\n",
+                                            "path=Resources.ADFS2.Metadata.AWS::CloudFormation::Init\n",
+                                            "action=cfn-init.exe -v -s ",
+                                            {
+                                                "Ref" : "AWS::StackId"
+                                            },
+                                            " -r ADFS2",
+                                            " --region ",
+                                            {
+                                                "Ref" : "AWS::Region"
+                                            },
+                                            "\n"
+                                        ]
+                                    ]
+                                }
+                            },
+                            "c:\\cfn\\scripts\\Unzip-Archive.ps1"      : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/scripts/Unzip-Archive.ps1"
+                            },
+                            "c:\\cfn\\modules\\AWSQuickStart.zip"      : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/modules/AWSQuickStart.zip"
+                            },
+                            "c:\\cfn\\scripts\\Join-Domain.ps1"        : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/scripts/Join-Domain.ps1"
+                            },
+                            "c:\\cfn\\scripts\\Install-ADFS.ps1"       : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/wapadfs/latest/scripts/Install-ADFS.ps1"
+                            },
+                            "c:\\cfn\\scripts\\Disable-AutoLogon.ps1"  : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/exchange/scripts/Disable-AutoLogon.ps1"
+                            },
+                            "c:\\cfn\\scripts\\Enable-AutoLogon.ps1"   : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/exchange/scripts/Enable-AutoLogon.ps1"
+                            },
+                            "c:\\cfn\\scripts\\Install.bat"            : {
+                                "content" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "powershell.exe -Command c:\\cfn\\scripts\\Install-ADFS.ps1 -DomainDNSName ",
+                                            {
+                                                "Ref" : "DomainDNSName"
+                                            },
+                                            " -DCName ",
+                                            {
+                                                "Ref" : "ADServerNetBIOSName1"
+                                            },
+                                            " -DomainNetBIOSName ",
+                                            {
+                                                "Ref" : "DomainNetBIOSName"
+                                            },
+                                            " -UserName ",
+                                            {
+                                                "Ref" : "DomainAdminUser"
+                                            },
+                                            " -Password ",
+                                            {
+                                                "Ref" : "DomainAdminPassword"
+                                            },
+                                            "\n"
+                                        ]
+                                    ]
+                                }
+                            }
+                        },
+                        "commands" : {
+                            "a-set-execution-policy" : {
+                                "command" : "powershell.exe -command Set-ExecutionPolicy RemoteSigned -Force",
+                                "waitAfterCompletion" : "0"
+                            },
+                            "b-unpack-quickstart-module" : {
+                                "command" : "powershell.exe -command c:\\cfn\\scripts\\Unzip-Archive.ps1 -Source c:\\cfn\\modules\\AWSQuickStart.zip -Destination C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules\\",
+                                "waitAfterCompletion" : "0"
+                            },
+                            "c-init-quickstart-module"   : {
+                                "command" : "powershell.exe -command New-AWSQuickStartWaitHandle -Handle ADFS2",
+                                "waitAfterCompletion" : "0"
+                            }
+                        },
+                        "services" : {
+                            "windows" : {
+                                "cfn-hup" : {
+                                    "enabled" : "true",
+                                    "ensureRunning" : "true",
+                                    "files"         : [
+                                        "c:\\cfn\\cfn-hup.conf",
+                                        "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "install"    : {
+                        "commands" : {
+                            "a-disable-win-fw" : {
+                                "command" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "powershell.exe -Command \"Get-NetFirewallProfile | Set-NetFirewallProfile -Enabled False\""
+                                        ]
+                                    ]
+                                },
+                                "waitAfterCompletion" : "0"
+                            },
+                            "b-rename-computer" : {
+                                "command" : "powershell.exe -Command Rename-Computer -NewName ADFS2 -Restart",
+                                "waitAfterCompletion" : "forever"
+                            },
+                            "c-set-dns-servers" : {
+                                "command" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "powershell.exe -Command ",
+                                            "\"",
+                                            "Get-NetAdapter | Set-DnsClientServerAddress -ServerAddresses ",
+                                            {
+                                                "Ref" : "ADServer2PrivateIp"
+                                            },
+                                            ",",
+                                            {
+                                                "Ref" : "ADServer1PrivateIp"
+                                            },
+                                            "\""
+                                        ]
+                                    ]
+                                },
+                                "waitAfterCompletion" : "30"
+                            },
+                            "d-join-domain"     : {
+                                "command" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "powershell.exe -Command c:\\cfn\\scripts\\Join-Domain.ps1 -DomainName ",
+                                            {
+                                                "Ref" : "DomainDNSName"
+                                            },
+                                            " -UserName ",
+                                            {
+                                                "Ref" : "DomainNetBIOSName"
+                                            },
+                                            "\\",
+                                            {
+                                                "Ref" : "DomainAdminUser"
+                                            },
+                                            " -Password ",
+                                            {
+                                                "Ref" : "DomainAdminPassword"
+                                            }
+                                        ]
+                                    ]
+                                },
+                                "waitAfterCompletion" : "forever"
+                            },
+                            "e-enable-autologon" : {
+                                "command" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "powershell.exe -Command c:\\cfn\\scripts\\Enable-AutoLogon.ps1",
+                                            " -UserName ",
+                                            {
+                                                "Ref" : "DomainNetBIOSName"
+                                            },
+                                            "\\",
+                                            {
+                                                "Ref" : "DomainAdminUser"
+                                            },
+                                            " -Password ",
+                                            {
+                                                "Ref" : "DomainAdminPassword"
+                                            },
+                                            " -StartupScript c:\\cfn\\scripts\\Install.bat"
+                                        ]
+                                    ]
+                                },
+                                "waitAfterCompletion" : "0"
+                            },
+                            "f-reboot"           : {
+                                "command" : "powershell.exe -command Restart-Computer -Force",
+                                "waitAfterCompletion" : "forever"
+                            },
+                            "g-disable-autologon" : {
+                                "command" : "powershell.exe -command c:\\cfn\\scripts\\Disable-AutoLogon.ps1",
+                                "waitAfterCompletion" : "0"
+                            },
+                            "h-wait"              : {
+                                "command" : "powershell.exe -command Start-Sleep -Seconds 1800",
+                                "waitAfterCompletion" : "0"
+                            }
+                        }
+                    }
+                }
+            },
+            "Properties" : {
+                "ImageId" : {
+                    "Fn::FindInMap" : [
+                        "AWSRegionArch2AMI",
+                        {
+                            "Ref" : "AWS::Region"
+                        },
+                        {
+                            "Fn::FindInMap" : [
+                                "AWSInstanceType2Arch",
+                                {
+                                    "Ref" : "InstanceType"
+                                },
+                                "Arch"
+                            ]
+                        }
+                    ]
+                },
+                "InstanceType" : {
+                    "Ref" : "InstanceType"
+                },
+                "EbsOptimized" : "true",
+                "NetworkInterfaces" : [
+                    {
+                        "DeleteOnTermination" : "true",
+                        "DeviceIndex"         : 0,
+                        "SubnetId"            : {
+                            "Ref" : "PrivateSubnet2Id"
+                        },
+                        "GroupSet"            : [
+                            {
+                                "Ref" : "DomainMemberSGID"
+                            },
+                            {
+                                "Ref" : "ADFSSecurityGroup"
+                            }
+                        ]
+                    }
+                ],
+                "Tags"              : [
+                    {
+                        "Key" : "Name",
+                        "Value" : "ADFS2"
+                    }
+                ],
+                "BlockDeviceMappings" : [
+                    {
+                        "DeviceName" : "/dev/sda1",
+                        "Ebs"        : {
+                            "VolumeSize" : "100",
+                            "VolumeType" : "gp2"
+                        }
+                    },
+                    {
+                        "DeviceName" : "/dev/xvdb",
+                        "VirtualName" : "ephemeral0"
+                    }
+                ],
+                "KeyName"             : {
+                    "Ref" : "KeyPairName"
+                },
+                "UserData"            : {
+                    "Fn::Base64" : {
+                        "Fn::Join" : [
+                            "",
+                            [
+                                "<script>\n",
+                                "cfn-init.exe -v -c config -s ",
+                                {
+                                    "Ref" : "AWS::StackId"
+                                },
+                                " -r ADFS2 ",
+                                " --region ",
+                                {
+                                    "Ref" : "AWS::Region"
+                                },
+                                "\n",
+                                "</script>"
+                            ]
+                        ]
+                    }
+                }
+            },
+            "CreationPolicy" : {
+                "ResourceSignal" : {
+                    "Count" : "1",
+                    "Timeout" : "PT75M"
+                }
+            }
+        },
+        "WAPSecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "GroupDescription" : "Enable traffic to WAP Servers from the internet",
+                "VpcId"            : {
+                    "Ref" : "VPC"
+                },
+                "SecurityGroupIngress" : [
+                    {
+                        "IpProtocol" : "tcp",
+                        "FromPort"   : "443",
+                        "ToPort"     : "443",
+                        "CidrIp"     : "0.0.0.0/0"
+                    }
+                ]
+            }
+        },
+        "ADFSSecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "GroupDescription" : "Enable traffic to ADFS servers",
+                "VpcId"            : {
+                    "Ref" : "VPC"
+                },
+                "SecurityGroupIngress" : [
+                    {
+                        "IpProtocol" : "tcp",
+                        "FromPort"   : "443",
+                        "ToPort"     : "443",
+                        "CidrIp"     : {
+                            "Ref" : "VPCCIDR"
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}
