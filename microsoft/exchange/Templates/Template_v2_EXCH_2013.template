@@ -1,6 +1,6 @@
 {
     "AWSTemplateFormatVersion" : "2010-09-09",
-    "Description"              : "(000E) - This template deploys two Exchange Server 2013 CU 7 servers. This template is intended to be installed into an existing VPC that was built using the sample reference architecture titled: \"Implementing Active Directory Domain Services in the AWS Cloud\" **WARNING** This template creates Amazon EC2 Windows instance and related resources. You will be billed for the AWS resources used if you create a stack from this template.",
+    "Description"              : "(000E) - This template deploys Exchange Server 2013 CU 7 servers. This template is intended to be installed into an existing VPC that was built using the sample reference architecture titled: \"Implementing Active Directory Domain Services in the AWS Cloud\" **WARNING** This template creates Amazon EC2 Windows instance and related resources. You will be billed for the AWS resources used if you create a stack from this template.",
     "Parameters"               : {
         "KeyPairName" : {
             "Description" : "Public/private key pairs allow you to securely connect to your instance after it launches",
@@ -9,23 +9,18 @@
         "EXCHInstanceType" : {
             "Description" : "Amazon EC2 instance type for the Exchange Servers",
             "Type"        : "String",
-            "Default"     : "r3.xlarge",
+            "Default"     : "m4.4xlarge",
             "AllowedValues" : [
-                "r3.xlarge",
-                "r3.2xlarge",
-                "r3.4xlarge"
+                "m4.4xlarge"
             ],
             "ConstraintDescription" : "Only EBS Optimized instance types r3.xlarge, r3.2xlarge, r3.4xlarge allowed"
         },
         "EdgeInstanceType" : {
             "Description" : "Amazon EC2 instance type for the Exchange Edge Transport Servers",
             "Type"        : "String",
-            "Default"     : "m3.large",
+            "Default"     : "m4.4xlarge",
             "AllowedValues" : [
-                "m3.medium",
-                "m3.large",
-                "m3.xlarge",
-                "m3.2xlarge"
+                "m4.4xlarge"
             ],
             "ConstraintDescription" : "Select a general purpose instance type"
         },
@@ -87,26 +82,6 @@
             "Description" : "Fixed private IP for the second existing Active Directory serverr located in AZ2",
             "Type"        : "String",
             "Default"     : "10.0.64.10"
-        },
-        "EXCH1PrivateIp"       : {
-            "Description" : "Primary private IP for the first Exchange Server",
-            "Type"        : "String",
-            "Default"     : "10.0.0.150"
-        },
-        "EXCH1PrivateIp2"      : {
-            "Description" : "Secondary private IP for the first Exchange Server",
-            "Type"        : "String",
-            "Default"     : "10.0.0.151"
-        },
-        "EXCH2PrivateIp"       : {
-            "Description" : "Primary private IP for the second Exchange Server",
-            "Type"        : "String",
-            "Default"     : "10.0.64.150"
-        },
-        "EXCH2PrivateIp2"      : {
-            "Description" : "Secondary private IP for the second Exchange Server",
-            "Type"        : "String",
-            "Default"     : "10.0.64.151"
         },
         "IncludeEdge"          : {
             "Description" : "Set this parameter to true to include Exchange Edge Transport servers in the public subnets",
@@ -210,31 +185,31 @@
         },
         "AWSRegionArch2AMI"    : {
             "us-east-1" : {
-                "64" : "ami-cd9339a6"
+                "64" : "ami-f70cdd9c"
             },
             "us-west-2" : {
-                "64" : "ami-4dbcb67d"
+                "64" : "ami-c3b3b1f3"
             },
             "us-west-1" : {
-                "64" : "ami-bf2dd3fb"
+                "64" : "ami-3bee1c7f"
             },
             "eu-west-1" : {
-                "64" : "ami-1a92cf6d"
+                "64" : "ami-68347d1f"
             },
             "eu-central-1" : {
-                "64" : "ami-86393e9b"
+                "64" : "ami-f64540eb"
             },
             "ap-southeast-1" : {
-                "64" : "ami-12737d40"
+                "64" : "ami-b89093ea"
             },
             "ap-northeast-1" : {
-                "64" : "ami-b4ce74b4"
+                "64" : "ami-e69520e6"
             },
             "sa-east-1"      : {
-                "64" : "ami-89ff7794"
+                "64" : "ami-87f8779a"
             },
             "ap-southeast-2" : {
-                "64" : "ami-7ddb9847"
+                "64" : "ami-2d2d6b17"
             }
         }
     },
@@ -249,32 +224,6 @@
         }
     },
     "Resources"                : {
-        "EXCH1WaitCondition" : {
-            "Type" : "AWS::CloudFormation::WaitCondition",
-            "DependsOn" : "EXCH1",
-            "Properties" : {
-                "Handle" : {
-                    "Ref" : "EXCH1WaitHandle"
-                },
-                "Timeout" : "5400"
-            }
-        },
-        "EXCH1WaitHandle"    : {
-            "Type" : "AWS::CloudFormation::WaitConditionHandle"
-        },
-        "EXCH2WaitCondition" : {
-            "Type" : "AWS::CloudFormation::WaitCondition",
-            "DependsOn" : "EXCH2",
-            "Properties" : {
-                "Handle" : {
-                    "Ref" : "EXCH2WaitHandle"
-                },
-                "Timeout" : "9000"
-            }
-        },
-        "EXCH2WaitHandle"    : {
-            "Type" : "AWS::CloudFormation::WaitConditionHandle"
-        },
         "EDGE1WaitCondition" : {
             "Type" : "AWS::CloudFormation::WaitCondition",
             "Condition" : "DeployEdge",
@@ -374,7 +323,7 @@
                                             },
                                             "\\exchinstall",
                                             "\n",
-                                            "powershell.exe -command c:\\cfn\\scripts\\Install-Exch2013.ps1 -InstallPath \\\\",
+                                            "powershell.exe -command c:\\cfn\\scripts\\Install-Exch2013v2.ps1 -InstallPath \\\\",
                                             {
                                                 "Ref" : "ADServerNetBIOSName1"
                                             },
@@ -388,14 +337,8 @@
                             "c:\\cfn\\scripts\\Unzip-Archive.ps1"      : {
                                 "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/scripts/Unzip-Archive.ps1"
                             },
-                            "c:\\cfn\\scripts\\Initialize-ExchangeVolume.ps1" : {
-                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/exchange/scripts/Initialize-ExchangeVolume.ps1"
-                            },
                             "c:\\cfn\\modules\\AWSQuickStart.zip"             : {
-                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/scripts/AWSQuickStart.zip"
-                            },
-                            "c:\\cfn\\scripts\\CreateWaitHandle.ps1"          : {
-                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/scripts/CreateWaitHandle.ps1"
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/modules/AWSQuickStart.zip"
                             },
                             "c:\\cfn\\scripts\\Create-Share.ps1"              : {
                                 "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/exchange/scripts/Create-Share.ps1"
@@ -422,7 +365,7 @@
                                 "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/exchange/scripts/Install-Exch2013Org.ps1"
                             },
                             "c:\\cfn\\scripts\\Install-Exch2013.ps1"          : {
-                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/exchange/scripts/Install-Exch2013.ps1"
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/exchange/scripts/Install-Exch2013v2.ps1"
                             },
                             "c:\\cfn\\scripts\\Expand-ExchangeFiles.ps1"      : {
                                 "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/exchange/scripts/Expand-ExchangeFiles.ps1"
@@ -446,23 +389,8 @@
                                 "command" : "powershell.exe -command c:\\cfn\\scripts\\Unzip-Archive.ps1 -Source c:\\cfn\\modules\\AWSQuickStart.zip -Destination C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules\\",
                                 "waitAfterCompletion" : "0"
                             },
-                            "c-create-waithandle"        : {
-                                "command" : {
-                                    "Fn::Join" : [
-                                        "",
-                                        [
-                                            "powershell.exe -command \"c:\\cfn\\scripts\\CreateWaitHandle.ps1 -Handle '",
-                                            {
-                                                "Ref" : "EXCH1WaitHandle"
-                                            },
-                                            "'\""
-                                        ]
-                                    ]
-                                },
-                                "waitAfterCompletion" : "0"
-                            },
-                            "d-initialize-db-volume"     : {
-                                "command" : "powershell.exe -command c:\\cfn\\scripts\\Initialize-ExchangeVolume.ps1 -DriveLetter d",
+                            "c-init-quickstart-module"   : {
+                                "command" : "powershell.exe -command New-AWSQuickStartWaitHandle -Handle EXCH1",
                                 "waitAfterCompletion" : "0"
                             }
                         },
@@ -745,20 +673,6 @@
                         "SubnetId"            : {
                             "Ref" : "PrivateSubnet1Id"
                         },
-                        "PrivateIpAddresses"  : [
-                            {
-                                "Primary" : "true",
-                                "PrivateIpAddress" : {
-                                    "Ref" : "EXCH1PrivateIp"
-                                }
-                            },
-                            {
-                                "Primary" : "false",
-                                "PrivateIpAddress" : {
-                                    "Ref" : "EXCH1PrivateIp2"
-                                }
-                            }
-                        ],
                         "GroupSet"            : [
                             {
                                 "Ref" : "DomainMemberSGID"
@@ -823,11 +737,17 @@
                         ]
                     }
                 }
+            },
+            "CreationPolicy" : {
+                "ResourceSignal" : {
+                    "Count" : "1",
+                    "Timeout" : "PT75M"
+                }
             }
         },
         "EXCH2"              : {
             "Type" : "AWS::EC2::Instance",
-            "DependsOn" : "EXCH1WaitCondition",
+            "DependsOn" : "EXCH1",
             "Metadata"  : {
                 "AWS::CloudFormation::Init" : {
                     "configSets" : {
@@ -890,7 +810,7 @@
                                         [
                                             "powershell.exe -command c:\\cfn\\scripts\\Install-UcmaRuntime.ps1\n",
                                             "\n",
-                                            "powershell.exe -command c:\\cfn\\scripts\\Install-Exch2013.ps1 -InstallPath \\\\",
+                                            "powershell.exe -command c:\\cfn\\scripts\\Install-Exch2013v2.ps1 -InstallPath \\\\",
                                             {
                                                 "Ref" : "ADServerNetBIOSName1"
                                             },
@@ -904,11 +824,8 @@
                             "c:\\cfn\\scripts\\Unzip-Archive.ps1"      : {
                                 "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/scripts/Unzip-Archive.ps1"
                             },
-                            "c:\\cfn\\scripts\\Initialize-ExchangeVolume.ps1" : {
-                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/exchange/scripts/Initialize-ExchangeVolume.ps1"
-                            },
                             "c:\\cfn\\modules\\AWSQuickStart.zip"             : {
-                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/scripts/AWSQuickStart.zip"
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/modules/AWSQuickStart.zip"
                             },
                             "c:\\cfn\\scripts\\CreateWaitHandle.ps1"          : {
                                 "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/scripts/CreateWaitHandle.ps1"
@@ -926,7 +843,7 @@
                                 "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/scripts/Join-Domain.ps1"
                             },
                             "c:\\cfn\\scripts\\Install-Exch2013.ps1"          : {
-                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/exchange/scripts/Install-Exch2013.ps1"
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/exchange/scripts/Install-Exch2013v2.ps1"
                             },
                             "c:\\cfn\\scripts\\Expand-ExchangeFiles.ps1"      : {
                                 "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/exchange/scripts/Expand-ExchangeFiles.ps1"
@@ -950,23 +867,8 @@
                                 "command" : "powershell.exe -command c:\\cfn\\scripts\\Unzip-Archive.ps1 -Source c:\\cfn\\modules\\AWSQuickStart.zip -Destination C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules\\",
                                 "waitAfterCompletion" : "0"
                             },
-                            "c-create-waithandle"        : {
-                                "command" : {
-                                    "Fn::Join" : [
-                                        "",
-                                        [
-                                            "powershell.exe -command \"c:\\cfn\\scripts\\CreateWaitHandle.ps1 -Handle '",
-                                            {
-                                                "Ref" : "EXCH2WaitHandle"
-                                            },
-                                            "'\""
-                                        ]
-                                    ]
-                                },
-                                "waitAfterCompletion" : "0"
-                            },
-                            "d-initialize-db-volume"     : {
-                                "command" : "powershell.exe -command c:\\cfn\\scripts\\Initialize-ExchangeVolume.ps1 -DriveLetter d",
+                            "c-init-quickstart-module"   : {
+                                "command" : "powershell.exe -command New-AWSQuickStartWaitHandle -Handle EXCH2",
                                 "waitAfterCompletion" : "0"
                             }
                         },
@@ -1152,20 +1054,6 @@
                         "SubnetId"            : {
                             "Ref" : "PrivateSubnet2Id"
                         },
-                        "PrivateIpAddresses"  : [
-                            {
-                                "Primary" : "true",
-                                "PrivateIpAddress" : {
-                                    "Ref" : "EXCH2PrivateIp"
-                                }
-                            },
-                            {
-                                "Primary" : "false",
-                                "PrivateIpAddress" : {
-                                    "Ref" : "EXCH2PrivateIp2"
-                                }
-                            }
-                        ],
                         "GroupSet"            : [
                             {
                                 "Ref" : "DomainMemberSGID"
@@ -1230,11 +1118,779 @@
                         ]
                     }
                 }
+            },
+            "CreationPolicy" : {
+                "ResourceSignal" : {
+                    "Count" : "1",
+                    "Timeout" : "PT75M"
+                }
+            }
+        },
+        "EXCH3"              : {
+            "Type" : "AWS::EC2::Instance",
+            "DependsOn" : "EXCH1",
+            "Metadata"  : {
+                "AWS::CloudFormation::Init" : {
+                    "configSets" : {
+                        "config" : [
+                            "setup",
+                            "rename",
+                            "join",
+                            "installexch",
+                            "finalize"
+                        ]
+                    },
+                    "setup"      : {
+                        "files" : {
+                            "c:\\cfn\\cfn-hup.conf" : {
+                                "content" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "[main]\n",
+                                            "stack=",
+                                            {
+                                                "Ref" : "AWS::StackId"
+                                            },
+                                            "\n",
+                                            "region=",
+                                            {
+                                                "Ref" : "AWS::Region"
+                                            },
+                                            "\n"
+                                        ]
+                                    ]
+                                }
+                            },
+                            "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf" : {
+                                "content" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "[cfn-auto-reloader-hook]\n",
+                                            "triggers=post.update\n",
+                                            "path=Resources.EXCH3.Metadata.AWS::CloudFormation::Init\n",
+                                            "action=cfn-init.exe -v -s ",
+                                            {
+                                                "Ref" : "AWS::StackId"
+                                            },
+                                            " -r EXCH3",
+                                            " --region ",
+                                            {
+                                                "Ref" : "AWS::Region"
+                                            },
+                                            "\n"
+                                        ]
+                                    ]
+                                }
+                            },
+                            "c:\\cfn\\scripts\\Install.bat"            : {
+                                "content" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "powershell.exe -command c:\\cfn\\scripts\\Install-UcmaRuntime.ps1\n",
+                                            "\n",
+                                            "powershell.exe -command c:\\cfn\\scripts\\Install-Exch2013v2.ps1 -InstallPath \\\\",
+                                            {
+                                                "Ref" : "ADServerNetBIOSName1"
+                                            },
+                                            "\\exchinstall ",
+                                            "-Server 3",
+                                            "\n"
+                                        ]
+                                    ]
+                                }
+                            },
+                            "c:\\cfn\\scripts\\Unzip-Archive.ps1"      : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/scripts/Unzip-Archive.ps1"
+                            },
+                            "c:\\cfn\\modules\\AWSQuickStart.zip"             : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/modules/AWSQuickStart.zip"
+                            },
+                            "c:\\cfn\\scripts\\CreateWaitHandle.ps1"          : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/scripts/CreateWaitHandle.ps1"
+                            },
+                            "c:\\cfn\\scripts\\Install-ExchPreReq.ps1"        : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/exchange/scripts/Install-ExchPreReq.ps1"
+                            },
+                            "c:\\cfn\\scripts\\Install-UcmaRuntime.ps1"       : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/exchange/scripts/Install-UcmaRuntime.ps1"
+                            },
+                            "c:\\cfn\\downloads\\UcmaRuntimeSetup.exe"        : {
+                                "source" : "http://download.microsoft.com/download/2/C/4/2C47A5C1-A1F3-4843-B9FE-84C0032C61EC/UcmaRuntimeSetup.exe"
+                            },
+                            "c:\\cfn\\scripts\\Join-Domain.ps1"               : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/scripts/Join-Domain.ps1"
+                            },
+                            "c:\\cfn\\scripts\\Install-Exch2013.ps1"          : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/exchange/scripts/Install-Exch2013v2.ps1"
+                            },
+                            "c:\\cfn\\scripts\\Expand-ExchangeFiles.ps1"      : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/exchange/scripts/Expand-ExchangeFiles.ps1"
+                            },
+                            "c:\\cfn\\scripts\\Disable-AutoLogon.ps1"         : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/exchange/scripts/Disable-AutoLogon.ps1"
+                            },
+                            "c:\\cfn\\scripts\\Enable-AutoLogon.ps1"          : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/exchange/scripts/Enable-AutoLogon.ps1"
+                            },
+                            "c:\\cfn\\scripts\\Invoke-ADReplication.ps1"      : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/scripts/Invoke-ADReplication.ps1"
+                            }
+                        },
+                        "commands" : {
+                            "a-set-execution-policy" : {
+                                "command" : "powershell.exe -command Set-ExecutionPolicy RemoteSigned -Force",
+                                "waitAfterCompletion" : "0"
+                            },
+                            "b-unpack-quickstart-module" : {
+                                "command" : "powershell.exe -command c:\\cfn\\scripts\\Unzip-Archive.ps1 -Source c:\\cfn\\modules\\AWSQuickStart.zip -Destination C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules\\",
+                                "waitAfterCompletion" : "0"
+                            },
+                            "c-init-quickstart-module"   : {
+                                "command" : "powershell.exe -command New-AWSQuickStartWaitHandle -Handle EXCH3",
+                                "waitAfterCompletion" : "0"
+                            }
+                        },
+                        "services" : {
+                            "windows" : {
+                                "cfn-hup" : {
+                                    "enabled" : "true",
+                                    "ensureRunning" : "true",
+                                    "files"         : [
+                                        "c:\\cfn\\cfn-hup.conf",
+                                        "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "rename"     : {
+                        "commands" : {
+                            "a-execute-powershell-script-RenameComputer" : {
+                                "command" : "powershell.exe -Command Rename-Computer -NewName EXCH3 -Restart",
+                                "waitAfterCompletion" : "forever"
+                            }
+                        }
+                    },
+                    "join"       : {
+                        "commands" : {
+                            "a-set-dns-servers" : {
+                                "command" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "powershell.exe -Command ",
+                                            "\"",
+                                            "Get-NetAdapter | Set-DnsClientServerAddress -ServerAddresses ",
+                                            {
+                                                "Ref" : "ADServer1PrivateIp"
+                                            },
+                                            ",",
+                                            {
+                                                "Ref" : "ADServer2PrivateIp"
+                                            },
+                                            "\""
+                                        ]
+                                    ]
+                                },
+                                "waitAfterCompletion" : "30"
+                            },
+                            "b-join-domain"     : {
+                                "command" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "powershell.exe -Command c:\\cfn\\scripts\\Join-Domain.ps1 -DomainName ",
+                                            {
+                                                "Ref" : "DomainDNSName"
+                                            },
+                                            " -UserName ",
+                                            {
+                                                "Ref" : "DomainNetBIOSName"
+                                            },
+                                            "\\",
+                                            {
+                                                "Ref" : "DomainAdminUser"
+                                            },
+                                            " -Password ",
+                                            {
+                                                "Ref" : "DomainAdminPassword"
+                                            }
+                                        ]
+                                    ]
+                                },
+                                "waitAfterCompletion" : "forever"
+                            }
+                        }
+                    },
+                    "installexch" : {
+                        "commands" : {
+                            "a-install-prereq" : {
+                                "command" : "powershell.exe -Command c:\\cfn\\scripts\\Install-ExchPreReq.ps1",
+                                "waitAfterCompletion" : "forever"
+                            },
+                            "b-enable-autologon" : {
+                                "command" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "powershell.exe -Command c:\\cfn\\scripts\\Enable-AutoLogon.ps1",
+                                            " -UserName ",
+                                            {
+                                                "Ref" : "DomainNetBIOSName"
+                                            },
+                                            "\\",
+                                            {
+                                                "Ref" : "DomainAdminUser"
+                                            },
+                                            " -Password ",
+                                            {
+                                                "Ref" : "DomainAdminPassword"
+                                            },
+                                            " -StartupScript c:\\cfn\\scripts\\Install.bat"
+                                        ]
+                                    ]
+                                },
+                                "waitAfterCompletion" : "0"
+                            },
+                            "c-reboot"           : {
+                                "command" : "powershell.exe -command Restart-Computer -Force",
+                                "waitAfterCompletion" : "forever"
+                            },
+                            "d-wait"             : {
+                                "command" : "powershell.exe -command Start-Sleep -Seconds 2100",
+                                "waitAfterCompletion" : "0"
+                            },
+                            "e-invoke-ad-replication" : {
+                                "command" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "powershell.exe -Command c:\\cfn\\scripts\\Invoke-ADReplication.ps1",
+                                            " -UserName ",
+                                            {
+                                                "Ref" : "DomainNetBIOSName"
+                                            },
+                                            "\\",
+                                            {
+                                                "Ref" : "DomainAdminUser"
+                                            },
+                                            " -Password ",
+                                            {
+                                                "Ref" : "DomainAdminPassword"
+                                            },
+                                            " -DomainController ",
+                                            {
+                                                "Ref" : "ADServerNetBIOSName2"
+                                            }
+                                        ]
+                                    ]
+                                },
+                                "waitAfterCompletion" : "0"
+                            },
+                            "f-disable-autologon"     : {
+                                "command" : "powershell.exe -command c:\\cfn\\scripts\\Disable-AutoLogon.ps1",
+                                "waitAfterCompletion" : "0"
+                            }
+                        }
+                    },
+                    "finalize"    : {
+                        "commands" : {
+                            "a-write-status" : {
+                                "command" : "powershell.exe -command Write-AWSQuickStartStatus",
+                                "waitAfterCompletion" : "0"
+                            }
+                        }
+                    }
+                }
+            },
+            "Properties" : {
+                "ImageId" : {
+                    "Fn::FindInMap" : [
+                        "AWSRegionArch2AMI",
+                        {
+                            "Ref" : "AWS::Region"
+                        },
+                        {
+                            "Fn::FindInMap" : [
+                                "AWSInstanceType2Arch",
+                                {
+                                    "Ref" : "EXCHInstanceType"
+                                },
+                                "Arch"
+                            ]
+                        }
+                    ]
+                },
+                "InstanceType" : {
+                    "Ref" : "EXCHInstanceType"
+                },
+                "EbsOptimized" : "true",
+                "NetworkInterfaces" : [
+                    {
+                        "DeleteOnTermination" : "true",
+                        "DeviceIndex"         : 0,
+                        "SubnetId"            : {
+                            "Ref" : "PrivateSubnet1Id"
+                        },
+                        "GroupSet"            : [
+                            {
+                                "Ref" : "DomainMemberSGID"
+                            },
+                            {
+                                "Ref" : "EXCHSecurityGroup"
+                            },
+                            {
+                                "Ref" : "EXCHClientSecurityGroup"
+                            }
+                        ]
+                    }
+                ],
+                "Tags"              : [
+                    {
+                        "Key" : "Name",
+                        "Value" : "EXCH3"
+                    }
+                ],
+                "BlockDeviceMappings" : [
+                    {
+                        "DeviceName" : "/dev/sda1",
+                        "Ebs"        : {
+                            "VolumeSize" : "300",
+                            "VolumeType" : "gp2"
+                        }
+                    },
+                    {
+                        "DeviceName" : "/dev/xvdb",
+                        "VirtualName" : "ephemeral0"
+                    }
+                ],
+                "Volumes"             : [
+                    {
+                        "VolumeId" : {
+                            "Ref" : "EXCH3Volume1"
+                        },
+                        "Device"   : "/dev/xvdf"
+                    }
+                ],
+                "KeyName"             : {
+                    "Ref" : "KeyPairName"
+                },
+                "UserData"            : {
+                    "Fn::Base64" : {
+                        "Fn::Join" : [
+                            "",
+                            [
+                                "<script>\n",
+                                "cfn-init.exe -v -c config -s ",
+                                {
+                                    "Ref" : "AWS::StackId"
+                                },
+                                " -r EXCH3 ",
+                                " --region ",
+                                {
+                                    "Ref" : "AWS::Region"
+                                },
+                                "\n",
+                                "</script>"
+                            ]
+                        ]
+                    }
+                }
+            },
+            "CreationPolicy" : {
+                "ResourceSignal" : {
+                    "Count" : "1",
+                    "Timeout" : "PT75M"
+                }
+            }
+        },
+        "EXCH4"              : {
+            "Type" : "AWS::EC2::Instance",
+            "DependsOn" : "EXCH1",
+            "Metadata"  : {
+                "AWS::CloudFormation::Init" : {
+                    "configSets" : {
+                        "config" : [
+                            "setup",
+                            "rename",
+                            "join",
+                            "installexch",
+                            "finalize"
+                        ]
+                    },
+                    "setup"      : {
+                        "files" : {
+                            "c:\\cfn\\cfn-hup.conf" : {
+                                "content" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "[main]\n",
+                                            "stack=",
+                                            {
+                                                "Ref" : "AWS::StackId"
+                                            },
+                                            "\n",
+                                            "region=",
+                                            {
+                                                "Ref" : "AWS::Region"
+                                            },
+                                            "\n"
+                                        ]
+                                    ]
+                                }
+                            },
+                            "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf" : {
+                                "content" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "[cfn-auto-reloader-hook]\n",
+                                            "triggers=post.update\n",
+                                            "path=Resources.EXCH4.Metadata.AWS::CloudFormation::Init\n",
+                                            "action=cfn-init.exe -v -s ",
+                                            {
+                                                "Ref" : "AWS::StackId"
+                                            },
+                                            " -r EXCH4",
+                                            " --region ",
+                                            {
+                                                "Ref" : "AWS::Region"
+                                            },
+                                            "\n"
+                                        ]
+                                    ]
+                                }
+                            },
+                            "c:\\cfn\\scripts\\Install.bat"            : {
+                                "content" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "powershell.exe -command c:\\cfn\\scripts\\Install-UcmaRuntime.ps1\n",
+                                            "\n",
+                                            "powershell.exe -command c:\\cfn\\scripts\\Install-Exch2013v2.ps1 -InstallPath \\\\",
+                                            {
+                                                "Ref" : "ADServerNetBIOSName1"
+                                            },
+                                            "\\exchinstall ",
+                                            "-Server 4",
+                                            "\n"
+                                        ]
+                                    ]
+                                }
+                            },
+                            "c:\\cfn\\scripts\\Unzip-Archive.ps1"      : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/scripts/Unzip-Archive.ps1"
+                            },
+                            "c:\\cfn\\modules\\AWSQuickStart.zip"             : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/modules/AWSQuickStart.zip"
+                            },
+                            "c:\\cfn\\scripts\\CreateWaitHandle.ps1"          : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/scripts/CreateWaitHandle.ps1"
+                            },
+                            "c:\\cfn\\scripts\\Install-ExchPreReq.ps1"        : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/exchange/scripts/Install-ExchPreReq.ps1"
+                            },
+                            "c:\\cfn\\scripts\\Install-UcmaRuntime.ps1"       : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/exchange/scripts/Install-UcmaRuntime.ps1"
+                            },
+                            "c:\\cfn\\downloads\\UcmaRuntimeSetup.exe"        : {
+                                "source" : "http://download.microsoft.com/download/2/C/4/2C47A5C1-A1F3-4843-B9FE-84C0032C61EC/UcmaRuntimeSetup.exe"
+                            },
+                            "c:\\cfn\\scripts\\Join-Domain.ps1"               : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/scripts/Join-Domain.ps1"
+                            },
+                            "c:\\cfn\\scripts\\Install-Exch2013.ps1"          : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/exchange/scripts/Install-Exch2013v2.ps1"
+                            },
+                            "c:\\cfn\\scripts\\Expand-ExchangeFiles.ps1"      : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/exchange/scripts/Expand-ExchangeFiles.ps1"
+                            },
+                            "c:\\cfn\\scripts\\Disable-AutoLogon.ps1"         : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/exchange/scripts/Disable-AutoLogon.ps1"
+                            },
+                            "c:\\cfn\\scripts\\Enable-AutoLogon.ps1"          : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/exchange/scripts/Enable-AutoLogon.ps1"
+                            },
+                            "c:\\cfn\\scripts\\Invoke-ADReplication.ps1"      : {
+                                "source" : "https://s3.amazonaws.com/quickstart-reference/microsoft/utilities/latest/scripts/Invoke-ADReplication.ps1"
+                            }
+                        },
+                        "commands" : {
+                            "a-set-execution-policy" : {
+                                "command" : "powershell.exe -command Set-ExecutionPolicy RemoteSigned -Force",
+                                "waitAfterCompletion" : "0"
+                            },
+                            "b-unpack-quickstart-module" : {
+                                "command" : "powershell.exe -command c:\\cfn\\scripts\\Unzip-Archive.ps1 -Source c:\\cfn\\modules\\AWSQuickStart.zip -Destination C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules\\",
+                                "waitAfterCompletion" : "0"
+                            },
+                            "c-init-quickstart-module"   : {
+                                "command" : "powershell.exe -command New-AWSQuickStartWaitHandle -Handle EXCH4",
+                                "waitAfterCompletion" : "0"
+                            }
+                        },
+                        "services" : {
+                            "windows" : {
+                                "cfn-hup" : {
+                                    "enabled" : "true",
+                                    "ensureRunning" : "true",
+                                    "files"         : [
+                                        "c:\\cfn\\cfn-hup.conf",
+                                        "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "rename"     : {
+                        "commands" : {
+                            "a-execute-powershell-script-RenameComputer" : {
+                                "command" : "powershell.exe -Command Rename-Computer -NewName EXCH4 -Restart",
+                                "waitAfterCompletion" : "forever"
+                            }
+                        }
+                    },
+                    "join"       : {
+                        "commands" : {
+                            "a-set-dns-servers" : {
+                                "command" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "powershell.exe -Command ",
+                                            "\"",
+                                            "Get-NetAdapter | Set-DnsClientServerAddress -ServerAddresses ",
+                                            {
+                                                "Ref" : "ADServer1PrivateIp"
+                                            },
+                                            ",",
+                                            {
+                                                "Ref" : "ADServer2PrivateIp"
+                                            },
+                                            "\""
+                                        ]
+                                    ]
+                                },
+                                "waitAfterCompletion" : "30"
+                            },
+                            "b-join-domain"     : {
+                                "command" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "powershell.exe -Command c:\\cfn\\scripts\\Join-Domain.ps1 -DomainName ",
+                                            {
+                                                "Ref" : "DomainDNSName"
+                                            },
+                                            " -UserName ",
+                                            {
+                                                "Ref" : "DomainNetBIOSName"
+                                            },
+                                            "\\",
+                                            {
+                                                "Ref" : "DomainAdminUser"
+                                            },
+                                            " -Password ",
+                                            {
+                                                "Ref" : "DomainAdminPassword"
+                                            }
+                                        ]
+                                    ]
+                                },
+                                "waitAfterCompletion" : "forever"
+                            }
+                        }
+                    },
+                    "installexch" : {
+                        "commands" : {
+                            "a-install-prereq" : {
+                                "command" : "powershell.exe -Command c:\\cfn\\scripts\\Install-ExchPreReq.ps1",
+                                "waitAfterCompletion" : "forever"
+                            },
+                            "b-enable-autologon" : {
+                                "command" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "powershell.exe -Command c:\\cfn\\scripts\\Enable-AutoLogon.ps1",
+                                            " -UserName ",
+                                            {
+                                                "Ref" : "DomainNetBIOSName"
+                                            },
+                                            "\\",
+                                            {
+                                                "Ref" : "DomainAdminUser"
+                                            },
+                                            " -Password ",
+                                            {
+                                                "Ref" : "DomainAdminPassword"
+                                            },
+                                            " -StartupScript c:\\cfn\\scripts\\Install.bat"
+                                        ]
+                                    ]
+                                },
+                                "waitAfterCompletion" : "0"
+                            },
+                            "c-reboot"           : {
+                                "command" : "powershell.exe -command Restart-Computer -Force",
+                                "waitAfterCompletion" : "forever"
+                            },
+                            "d-wait"             : {
+                                "command" : "powershell.exe -command Start-Sleep -Seconds 2100",
+                                "waitAfterCompletion" : "0"
+                            },
+                            "e-invoke-ad-replication" : {
+                                "command" : {
+                                    "Fn::Join" : [
+                                        "",
+                                        [
+                                            "powershell.exe -Command c:\\cfn\\scripts\\Invoke-ADReplication.ps1",
+                                            " -UserName ",
+                                            {
+                                                "Ref" : "DomainNetBIOSName"
+                                            },
+                                            "\\",
+                                            {
+                                                "Ref" : "DomainAdminUser"
+                                            },
+                                            " -Password ",
+                                            {
+                                                "Ref" : "DomainAdminPassword"
+                                            },
+                                            " -DomainController ",
+                                            {
+                                                "Ref" : "ADServerNetBIOSName2"
+                                            }
+                                        ]
+                                    ]
+                                },
+                                "waitAfterCompletion" : "0"
+                            },
+                            "f-disable-autologon"     : {
+                                "command" : "powershell.exe -command c:\\cfn\\scripts\\Disable-AutoLogon.ps1",
+                                "waitAfterCompletion" : "0"
+                            }
+                        }
+                    },
+                    "finalize"    : {
+                        "commands" : {
+                            "a-write-status" : {
+                                "command" : "powershell.exe -command Write-AWSQuickStartStatus",
+                                "waitAfterCompletion" : "0"
+                            }
+                        }
+                    }
+                }
+            },
+            "Properties" : {
+                "ImageId" : {
+                    "Fn::FindInMap" : [
+                        "AWSRegionArch2AMI",
+                        {
+                            "Ref" : "AWS::Region"
+                        },
+                        {
+                            "Fn::FindInMap" : [
+                                "AWSInstanceType2Arch",
+                                {
+                                    "Ref" : "EXCHInstanceType"
+                                },
+                                "Arch"
+                            ]
+                        }
+                    ]
+                },
+                "InstanceType" : {
+                    "Ref" : "EXCHInstanceType"
+                },
+                "EbsOptimized" : "true",
+                "NetworkInterfaces" : [
+                    {
+                        "DeleteOnTermination" : "true",
+                        "DeviceIndex"         : 0,
+                        "SubnetId"            : {
+                            "Ref" : "PrivateSubnet2Id"
+                        },
+                        "GroupSet"            : [
+                            {
+                                "Ref" : "DomainMemberSGID"
+                            },
+                            {
+                                "Ref" : "EXCHSecurityGroup"
+                            },
+                            {
+                                "Ref" : "EXCHClientSecurityGroup"
+                            }
+                        ]
+                    }
+                ],
+                "Tags"              : [
+                    {
+                        "Key" : "Name",
+                        "Value" : "EXCH4"
+                    }
+                ],
+                "BlockDeviceMappings" : [
+                    {
+                        "DeviceName" : "/dev/sda1",
+                        "Ebs"        : {
+                            "VolumeSize" : "300",
+                            "VolumeType" : "gp2"
+                        }
+                    },
+                    {
+                        "DeviceName" : "/dev/xvdb",
+                        "VirtualName" : "ephemeral0"
+                    }
+                ],
+                "Volumes"             : [
+                    {
+                        "VolumeId" : {
+                            "Ref" : "EXCH4Volume1"
+                        },
+                        "Device"   : "/dev/xvdf"
+                    }
+                ],
+                "KeyName"             : {
+                    "Ref" : "KeyPairName"
+                },
+                "UserData"            : {
+                    "Fn::Base64" : {
+                        "Fn::Join" : [
+                            "",
+                            [
+                                "<script>\n",
+                                "cfn-init.exe -v -c config -s ",
+                                {
+                                    "Ref" : "AWS::StackId"
+                                },
+                                " -r EXCH4 ",
+                                " --region ",
+                                {
+                                    "Ref" : "AWS::Region"
+                                },
+                                "\n",
+                                "</script>"
+                            ]
+                        ]
+                    }
+                }
+            },
+            "CreationPolicy" : {
+                "ResourceSignal" : {
+                    "Count" : "1",
+                    "Timeout" : "PT75M"
+                }
             }
         },
         "EDGE1"              : {
             "Type" : "AWS::EC2::Instance",
-            "DependsOn" : "EXCH1WaitCondition",
+            "DependsOn" : "EXCH1",
             "Condition" : "DeployEdge",
             "Metadata"  : {
                 "AWS::CloudFormation::Init" : {
@@ -1602,7 +2258,7 @@
         },
         "EDGE2"              : {
             "Type" : "AWS::EC2::Instance",
-            "DependsOn" : "EXCH1WaitCondition",
+            "DependsOn" : "EXCH1",
             "Condition" : "DeployEdge",
             "Metadata"  : {
                 "AWS::CloudFormation::Init" : {
@@ -2018,6 +2674,36 @@
                 }
             }
         },
+        "EXCH3Volume1"       : {
+            "Type" : "AWS::EC2::Volume",
+            "Properties" : {
+                "Size" : "1000",
+                "VolumeType" : "gp2",
+                "AvailabilityZone" : {
+                    "Fn::Select" : [
+                        0,
+                        {
+                            "Fn::GetAZs" : ""
+                        }
+                    ]
+                }
+            }
+        },
+        "EXCH4Volume1"       : {
+            "Type" : "AWS::EC2::Volume",
+            "Properties" : {
+                "Size" : "1000",
+                "VolumeType" : "gp2",
+                "AvailabilityZone" : {
+                    "Fn::Select" : [
+                        1,
+                        {
+                            "Fn::GetAZs" : ""
+                        }
+                    ]
+                }
+            }
+        },
         "EXCHSecurityGroup"  : {
             "Type" : "AWS::EC2::SecurityGroup",
             "Properties" : {
@@ -2030,25 +2716,33 @@
                         "IpProtocol" : "-1",
                         "FromPort"   : "1",
                         "ToPort"     : "65535",
-                        "CidrIp"     : "10.0.2.150/32"
+                        "CidrIp"     : {
+                            "Ref" : "VPCCIDR"
+                        }
                     },
                     {
                         "IpProtocol" : "-1",
                         "FromPort"   : "1",
                         "ToPort"     : "65535",
-                        "CidrIp"     : "10.0.2.151/32"
+                        "CidrIp"     : {
+                            "Ref" : "VPCCIDR"
+                        }
                     },
                     {
                         "IpProtocol" : "-1",
                         "FromPort"   : "1",
                         "ToPort"     : "65535",
-                        "CidrIp"     : "10.0.2.160/32"
+                        "CidrIp"     : {
+                            "Ref" : "VPCCIDR"
+                        }
                     },
                     {
                         "IpProtocol" : "-1",
                         "FromPort"   : "1",
                         "ToPort"     : "65535",
-                        "CidrIp"     : "10.0.2.161/32"
+                        "CidrIp"     : {
+                            "Ref" : "VPCCIDR"
+                        }
                     }
                 ]
             }
