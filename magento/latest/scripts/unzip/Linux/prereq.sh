@@ -20,7 +20,7 @@ if [[ ! -d "$DIR" ]]; then
     DIR="$PWD"; 
 fi
 
-
+CACHEDIR=/s3fscache
 LOG_FILE=/home/ec2-user/misc/log.txt
 MAGENTO_TAR=magento-1.9.2.0.tar-2015-07-08-02-50-14.gz
 MAGENTO_SAMPLE=magento-sample-data-1.9.0.0.tar.gz
@@ -29,6 +29,7 @@ PHPCONF=/etc/httpd/conf.d/phpMyAdmin.conf
 PHPREMOTECONFIG=/home/ec2-user/misc/scripts/phpAccess.txt 
 FUSE_TAR=fuse-2.9.4.tar.gz
 
+mkdir -p ${CACHEDIR}
 # ------------------------------------------------------------------
 #          Output log
 # ------------------------------------------------------------------
@@ -136,13 +137,13 @@ setpermissions() {
          chmod 0664 $file; \
     done
 
-    find /tmp -type d | while read file; \
+    find ${CACHEDIR} -type d | while read file; \
         do \
          chown apache $file;\
          chmod 2775 $file; \
     done
 
-    find /tmp -type f | while read file; \
+    find ${CACHEDIR} -type f | while read file; \
         do \
          chown apache $file;\
          chmod 0664 $file; \
@@ -190,10 +191,11 @@ install_s3fuse() {
     yum install git -y
     yum install libcurl* -y
 
-    wget https://s3.amazonaws.com/${BUILDBUCKET}/magento/latest/media/${FUSE_TAR} --output-document=/home/ec2-user/misc/${FUSE_TAR}
-    #wget https://github.com/s3fs-fuse/s3fs-fuse/archive/master.zip
-    wget https://s3.amazonaws.com/${BUILDBUCKET}/magento/latest/media/master.zip
+    #wget https://s3.amazonaws.com/${BUILDBUCKET}/magento/latest/media/${FUSE_TAR} --output-document=/home/ec2-user/misc/${FUSE_TAR}
+	wget http://skylineservers.dl.sourceforge.net/project/fuse/fuse-2.X/2.9.4/fuse-2.9.4.tar.gz --output-document=/home/ec2-user/misc/${FUSE_TAR}
 
+    #wget https://s3.amazonaws.com/${BUILDBUCKET}/magento/latest/media/v1.79.zip
+	wget https://github.com/s3fs-fuse/s3fs-fuse/archive/v1.79.zip
 
     cd /home/ec2-user/misc
     tar xvf fuse-2.9.4.tar.gz 
@@ -206,8 +208,8 @@ install_s3fuse() {
 
 
     cd /home/ec2-user/misc
-    unzip master.zip
-    cd s3fs-fuse-master
+    unzip v1.79.zip
+    cd s3fs-fuse-1.79
     yum install fuse libcurl libxml* -y
     yum install gcc libstdc++-devel gcc-c++ curl-devel libxml2-devel openssl-devel mailcap
     sh ./autogen.sh
@@ -292,19 +294,20 @@ mountS3magento() {
     /bin/chown ec2-user:ec2-user /home/ec2-user/.passwd-s3fs
     /bin/chmod 600 /home/ec2-user/.passwd-s3fs
     mkdir -p /mnt
-    echo "/usr/bin/s3fs -o use_cache=/tmp,allow_other,user=apache -o passwd_file=/home/ec2-user/.passwd-s3fs ${MAGENTOMEDIAS3} /mnt"
-    OUT=$(/usr/bin/s3fs -o use_cache=/tmp,allow_other,user=apache -o passwd_file=/home/ec2-user/.passwd-s3fs ${MAGENTOMEDIAS3} /mnt 2>&1)
+    # debug options for s3fs -d -d -f -o f2 -o curldbg
+    echo "/usr/bin/s3fs -o default_acl=public-read -o use_cache=${CACHEDIR},allow_other,user=apache -o passwd_file=/home/ec2-user/.passwd-s3fs ${MAGENTOMEDIAS3} /mnt"
+    OUT=$(/usr/bin/s3fs -o default_acl=public-read -o use_cache=${CACHEDIR},allow_other,user=apache -o passwd_file=/home/ec2-user/.passwd-s3fs ${MAGENTOMEDIAS3} /mnt 2>&1)
     echo ${OUT}    
 
-    echo "s3fs#${MAGENTOMEDIAS3} /mnt fuse use_cache=/tmp,allow_other,user=apache 0 0" >> /etc/fstab
+    echo "s3fs#${MAGENTOMEDIAS3} /mnt fuse use_cache=${CACHEDIR},allow_other,user=apache,passwd_file=/home/ec2-user/.passwd-s3fs 0 0" >> /etc/fstab
     
-    # I don't know if this is needed. 
+    # Not sure if this is needed. 
     mkdir -p /mnt/magento/media
 
 }
 
 warmcache() {
-    /usr/local/bin/aws s3 cp --recursive  s3://${MAGENTOMEDIAS3}/magento/media/ /tmp/${MAGENTOMEDIAS3}/magento/media/ 
+    /usr/local/bin/aws s3 cp --recursive  s3://${MAGENTOMEDIAS3}/magento/media/ ${CACHEDIR}/${MAGENTOMEDIAS3}/magento/media/ 
 }
 
 setphpMyAdminAccess() {
