@@ -109,20 +109,16 @@
             "Default": "admin",
             "Description": "RDS MySQL Stack"
         },
-
-            "MagentoReleaseMedia": {
+        "MagentoReleaseMedia": {
             "Description": "Amazon S3 path to download magento .tar.gz file (s3://mybucket/magento-1.9.2.1.tar-2015-08-03-06-35-45.gz)",
             "Default": "",
             "Type": "String"
         },
-
-       "MagentoSampleData": {
+        "MagentoSampleData": {
             "Description": "[ optional ] Amazon S3 path to download magento sample data file ((s3://mybucket/magento-sample-data-1.9.1.0.tar-2015-02-11-08-18-26.gz)",
             "Default": "",
             "Type": "String"
         },
-
-
         "BuildBucket": {
             "Description": "S3 bucket containing templates and scripts [Don't change].",
             "Type": "String",
@@ -869,8 +865,6 @@
                                     ]
                                 },
                                 " >> /home/ec2-user/misc/config.sh\n",
-
-
                                 "echo ",
                                 {
                                     "Fn::Join": [
@@ -884,8 +878,6 @@
                                     ]
                                 },
                                 " >> /home/ec2-user/misc/config.sh\n",
-
-
                                 "echo ",
                                 {
                                     "Fn::Join": [
@@ -1074,11 +1066,19 @@
                     }
                 ],
                 "CrossZone": "true",
+                "LBCookieStickinessPolicy": [
+                    {
+                        "PolicyName": "MagentoELBStickyPolicy"
+                    }
+                ],
                 "Listeners": [
                     {
                         "LoadBalancerPort": "80",
                         "InstancePort": "80",
                         "Protocol": "HTTP",
+                        "PolicyNames": [
+                            "MagentoELBStickyPolicy"
+                        ],
                         "SSLCertificateId": {
                             "Fn::If": [
                                 "DontUseSSL",

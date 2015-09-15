@@ -1,19 +1,17 @@
 {
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "(0013) Deploy Magento on AWS (Existing VPC)",
     "Parameters": {
-
-            "MagentoReleaseMedia": {
+        "MagentoReleaseMedia": {
             "Description": "Amazon S3 path to download magento .tar.gz file (s3://mybucket/magento-1.9.2.1.tar-2015-08-03-06-35-45.gz)",
             "Default": "",
             "Type": "String"
         },
-
-       "MagentoSampleData": {
+        "MagentoSampleData": {
             "Description": "[ optional ] Amazon S3 path to download magento sample data file ((s3://mybucket/magento-sample-data-1.9.1.0.tar-2015-02-11-08-18-26.gz)",
             "Default": "",
             "Type": "String"
         },
-
-
         "WebServerInstanceType": {
             "Description": "WebServer EC2 instance type",
             "Type": "String",
@@ -260,8 +258,6 @@
                 "io1"
             ]
         },
-
-
         "PublicSubnet0": {
             "Type": "AWS::EC2::Subnet::Id",
             "Default": "subnet-91b40ac8"
@@ -276,20 +272,19 @@
         },
         "PrivateSubnet0": {
             "Type": "AWS::EC2::Subnet::Id",
-            "Default":"subnet-9eb40ac7"
-
+            "Default": "subnet-9eb40ac7"
         },
         "PrivateSubnet1": {
             "Type": "AWS::EC2::Subnet::Id",
-            "Default":"subnet-62127715"
+            "Default": "subnet-62127715"
         },
         "PrivateSubnet2": {
             "Type": "AWS::EC2::Subnet::Id",
-            "Default":"subnet-db2166be"
+            "Default": "subnet-db2166be"
         },
         "VPC": {
             "Type": "AWS::EC2::VPC::Id",
-            "Default":"vpc-8e493deb"
+            "Default": "vpc-8e493deb"
         },
         "RemoteAccessCIDR": {
             "Description": "The IP address range that can be used to SSH to the EC2 instances",
@@ -601,7 +596,7 @@
                     }
                 }
             }
-        },        
+        },
         "InboundEphemeralPrivateNetworkAclEntry": {
             "Type": "AWS::EC2::NetworkAclEntry",
             "Properties": {
