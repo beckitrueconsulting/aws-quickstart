@@ -5,13 +5,12 @@
         "VPC": {
             "Type": "AWS::EC2::VPC::Id",
             "Description": "VPC-ID of your existing Virtual Private Cloud (VPC) where you want to depoy WebServers.",
-            "Default": "vpc-8e493deb",
             "AllowedPattern": "vpc-[0-9a-z]{8}"
         },
         "WebServerInstanceType": {
             "Description": "WebServer EC2 instance type",
             "Type": "String",
-            "Default": "i2.8xlarge",
+            "Default": "m3.2xlarge",
             "AllowedValues": [
                 "t1.micro",
                 "t2.micro",
@@ -60,44 +59,49 @@
         },
         "NotificationEmail": {
             "Description": "Email address to notify if there are any scaling operations [ optional]",
-            "Default": "foobar@example.com",
+            "Default": "",
             "Type": "String"
         },
         "ElasticLoadBalancerSecurityGroup": {
             "Description": "Enter ElasticLoadBalancerSecurityGroup ",
-            "Default": "sg-9b9437ff",
+            "Default": "",
+            "Type": "String"
+        },
+        "SSLCertificateId": {
+            "Description": "The ARN of the SSL certificate to use. [ optional]",
+            "Default": "",
             "Type": "String"
         },
         "AutoScaledInstanceSecurityGroup": {
             "Description": "Enter AutoScaledInstanceSecurityGroup ",
-            "Default": "sg-749b3810",
+            "Default": "",
             "Type": "String"
         },
         "WebServerSubnets": {
             "Type": "List<AWS::EC2::Subnet::Id>",
             "Description": "A list of subnet identifiers of Amazon VPCs where the WebServer Autoscaling would be launched.",
-            "Default": "subnet-9eb40ac7,subnet-62127715",
+            "Default": "",
             "ConstraintDescription": "must be list of existing subnet Ids"
         },
         "ElasticLoadBalancerSubnets": {
             "Type": "List<AWS::EC2::Subnet::Id>",
             "Description": "A list of public subnet identifiers of Amazon VPCs where the ElasticLoadBalancer would be launched.",
-            "Default": "subnet-91b40ac8,subnet-63127714",
+            "Default": "",
             "ConstraintDescription": "must be list of existing Public subnet Ids"
         },
         "BucketNamePrefix": {
             "Description": "Name of bucket to share magento media",
-            "Default": "ohmalinboadkcxfndfingdindmagentomedia",
+            "Default": "",
             "Type": "String"
         },
         "RDSMySQLStack": {
             "Type": "String",
-            "Default": "arn:aws:cloudformation:us-west-2:169411373482:stack/Stack8311-RDSMySQL-5JOC7EA1VCN7/cca8c150-43a3-11e5-80ea-50e2414b0a44",
+            "Default": "",
             "Description": "RDS MySQL Stack"
         },
         "DBMasterUserPassword": {
             "Type": "String",
-            "Default": "admin123456",
+            "Default": "Admin123456",
             "Description": "RDS MySQL Stack"
         },
         "DBMasterUsername": {
@@ -105,14 +109,15 @@
             "Default": "admin",
             "Description": "RDS MySQL Stack"
         },
-        "InstallMagentoSampleData": {
-            "Description": "Enter 1 if sample data needs to be installed.",
-            "Type": "String",
-            "Default": "1",
-            "AllowedValues": [
-                "0",
-                "1"
-            ]
+        "MagentoReleaseMedia": {
+            "Description": "Amazon S3 path to download magento .tar.gz file (s3://mybucket/magento-1.9.2.1.tar-2015-08-03-06-35-45.gz)",
+            "Default": "",
+            "Type": "String"
+        },
+        "MagentoSampleData": {
+            "Description": "[ optional ] Amazon S3 path to download magento sample data file ((s3://mybucket/magento-sample-data-1.9.1.0.tar-2015-02-11-08-18-26.gz)",
+            "Default": "",
+            "Type": "String"
         },
         "BuildBucket": {
             "Description": "S3 bucket containing templates and scripts [Don't change].",
@@ -121,7 +126,7 @@
         },
         "WebServerMinSize": {
             "Description": "The minimum number of EC2 instances in the Auto Scaling group of WebServers.",
-            "Default": "2",
+            "Default": "1",
             "Type": "String",
             "AllowedValues": [
                 "1",
@@ -139,7 +144,7 @@
         "WebServerMaxSize": {
             "Description": "The maximum number of EC2 instances in the Auto Scaling group of WebServers.",
             "Type": "String",
-            "Default": "2",
+            "Default": "1",
             "AllowedValues": [
                 "1",
                 "2",
@@ -156,7 +161,7 @@
         "WebServerDesiredCapacity": {
             "Description": "The desired number of EC2 instances in the Auto Scaling group of WebServers before indicating CREATE_SUCCESS.",
             "Type": "String",
-            "Default": "2",
+            "Default": "1",
             "AllowedValues": [
                 "1",
                 "2",
@@ -173,7 +178,7 @@
         "KeyName": {
             "Description": "The EC2 Key Pair to allow SSH access to the instances",
             "Type": "AWS::EC2::KeyPair::KeyName",
-            "Default": "home",
+            "Default": "",
             "ConstraintDescription": "must be the name of an existing EC2 KeyPair."
         },
         "ExistingIamInstanceProfile": {
@@ -284,32 +289,32 @@
             }
         },
         "AMI": {
-            "eu-central-1": {
-                "64HVM": "ami-a8221fb5"
-            },
-            "sa-east-1": {
-                "64HVM": "ami-b52890a8"
-            },
-            "ap-northeast-1": {
-                "64HVM": "ami-cbf90ecb"
-            },
             "eu-west-1": {
-                "64HVM": "ami-a10897d6"
-            },
-            "us-east-1": {
-                "64HVM": "ami-1ecae776"
-            },
-            "us-west-1": {
-                "64HVM": "ami-d114f295"
-            },
-            "us-west-2": {
-                "64HVM": "ami-e7527ed7"
-            },
-            "ap-southeast-2": {
-                "64HVM": "ami-fd9cecc7"
+                "64HVM": "ami-e4d18e93"
             },
             "ap-southeast-1": {
-                "64HVM": "ami-68d8e93a"
+                "64HVM": "ami-d44b4286"
+            },
+            "ap-southeast-2": {
+                "64HVM": "ami-db7b39e1"
+            },
+            "eu-central-1": {
+                "64HVM": "ami-a6b0b7bb"
+            },
+            "ap-northeast-1": {
+                "64HVM": "ami-1c1b9f1c"
+            },
+            "us-east-1": {
+                "64HVM": "ami-0d4cfd66"
+            },
+            "sa-east-1": {
+                "64HVM": "ami-55098148"
+            },
+            "us-west-1": {
+                "64HVM": "ami-87ea13c3"
+            },
+            "us-west-2": {
+                "64HVM": "ami-d5c5d1e5"
             }
         }
     },
@@ -318,6 +323,14 @@
             "Fn::Equals": [
                 {
                     "Ref": "ExistingIamInstanceProfile"
+                },
+                ""
+            ]
+        },
+        "DontUseSSL": {
+            "Fn::Equals": [
+                {
+                    "Ref": "SSLCertificateId"
                 },
                 ""
             ]
@@ -844,9 +857,22 @@
                                     "Fn::Join": [
                                         "",
                                         [
-                                            "export INSTALLMAGENTOSAMPLE=",
+                                            "export MAGENTORELEASEMEDIA=",
                                             {
-                                                "Ref": "InstallMagentoSampleData"
+                                                "Ref": "MagentoReleaseMedia"
+                                            }
+                                        ]
+                                    ]
+                                },
+                                " >> /home/ec2-user/misc/config.sh\n",
+                                "echo ",
+                                {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            "export MAGENTOSAMPLEDATA=",
+                                            {
+                                                "Ref": "MagentoSampleData"
                                             }
                                         ]
                                     ]
@@ -1040,11 +1066,30 @@
                     }
                 ],
                 "CrossZone": "true",
+                "LBCookieStickinessPolicy": [
+                    {
+                        "PolicyName": "MagentoELBStickyPolicy"
+                    }
+                ],
                 "Listeners": [
                     {
                         "LoadBalancerPort": "80",
                         "InstancePort": "80",
-                        "Protocol": "HTTP"
+                        "Protocol": "HTTP",
+                        "PolicyNames": [
+                            "MagentoELBStickyPolicy"
+                        ],
+                        "SSLCertificateId": {
+                            "Fn::If": [
+                                "DontUseSSL",
+                                {
+                                    "Ref": "AWS::NoValue"
+                                },
+                                {
+                                    "Ref": "SSLCertificateId"
+                                }
+                            ]
+                        }
                     }
                 ],
                 "HealthCheck": {

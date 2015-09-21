@@ -1,9 +1,21 @@
 {
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "(0013) Deploy Magento on AWS (New VPC)",
     "Parameters": {
+        "MagentoReleaseMedia": {
+            "Description": "Amazon S3 path to download magento .tar.gz file (s3://mybucket/magento-1.9.2.1.tar-2015-08-03-06-35-45.gz)",
+            "Default": "",
+            "Type": "String"
+        },
+        "MagentoSampleData": {
+            "Description": "[ optional ] Amazon S3 path to download magento sample data file ((s3://mybucket/magento-sample-data-1.9.1.0.tar-2015-02-11-08-18-26.gz)",
+            "Default": "",
+            "Type": "String"
+        },
         "WebServerInstanceType": {
             "Description": "WebServer EC2 instance type",
             "Type": "String",
-            "Default": "i2.8xlarge",
+            "Default": "m3.2xlarge",
             "AllowedValues": [
                 "t1.micro",
                 "t2.micro",
@@ -52,7 +64,7 @@
         },
         "NotificationEmail": {
             "Description": "Email address to notify if there are any scaling operations [ optional]",
-            "Default": "foobar@example.com",
+            "Default": "",
             "Type": "String"
         },
         "WebServerMinSize": {
@@ -108,18 +120,18 @@
         },
         "KeyName": {
             "Type": "AWS::EC2::KeyPair::KeyName",
-            "Default": "home",
+            "Default": "",
             "Description": "Name of an EC2 KeyPair. Your instances will launch with this KeyPair."
         },
         "BucketNamePrefix": {
             "Description": "Name of bucket to hold magento media assets",
-            "Default": "avumindxdsmagentomedia",
+            "Default": "magentoquickstart",
             "Type": "String"
         },
         "ExistingIamInstanceProfile": {
             "Type": "String",
             "Default": "",
-            "Description": "Name or ARN of the instance profile associated with the IAM role for the WebServer instances. If empty, instances will be launched with default IAM role."
+            "Description": "[Optional] Name or ARN of the instance profile associated with the IAM role for the WebServer instances. If empty, instances will be launched with default IAM role."
         },
         "RemoteAccessCIDR": {
             "Description": "IP CIDR from where you could SSH into your QuickStart via NAT",
@@ -153,7 +165,7 @@
             "Description": "The number of days for which automatic DB snapshots are retained."
         },
         "DBInstanceClass": {
-            "Default": "db.cr1.8xlarge",
+            "Default": "db.m3.2xlarge",
             "Description": "The name of the compute and memory capacity class of the DB instance.",
             "Type": "String",
             "AllowedValues": [
@@ -190,7 +202,7 @@
             "AllowedPattern": "[a-zA-Z][a-zA-Z0-9]*"
         },
         "DBIops": {
-            "Default": "10000",
+            "Default": "1000",
             "Description": "DB Iops. Used only when io1 specified for the StorageType property",
             "Type": "Number",
             "AllowedValues": [
@@ -218,14 +230,13 @@
             "ConstraintDescription": "must begin with a letter and contain only alphanumeric characters."
         },
         "DBMasterUserPassword": {
-            "Default": "admin123456",
-            "Description": "The database admin account password",
+            "Description": "The database admin account password. Must be at least 8 characters containing letters, numbers and symbols",
             "Type": "String",
             "MinLength": "8",
-            "MaxLength": "64",
-            "NoEcho": "true",
-            "AllowedPattern": "[a-zA-Z0-9]*",
-            "ConstraintDescription": "Min 8 chars."
+            "MaxLength": "32",
+            "AllowedPattern": "(?=^.{6,255}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
+            "NoEcho": "True",
+            "Default": "Admin123456"
         },
         "DBMultiAZ": {
             "Default": "false",
@@ -245,23 +256,19 @@
                 "false"
             ]
         },
+        "SSLCertificateId": {
+            "Description": "The ARN of the SSL certificate to use for the webserver. [ optional]",
+            "Default": "",
+            "Type": "String"
+        },
         "DBStorageType": {
-            "Default": "io1",
+            "Default": "gp2",
             "Description": "The storage type associated with this database instance",
             "Type": "String",
             "AllowedValues": [
                 "standard",
                 "gp2",
                 "io1"
-            ]
-        },
-        "InstallMagentoSampleData": {
-            "Description": "Enter 1 if sample data needs to be installed.",
-            "Type": "String",
-            "Default": "0",
-            "AllowedValues": [
-                "0",
-                "1"
             ]
         },
         "VPCCIDR": {
@@ -317,27 +324,22 @@
         }
     },
     "Outputs": {
-        "NATInstanceEIP": {
-            "Description": "NAT Instance located in Public Subnet",
+        "NATInstance0": {
+            "Description": "NAT InstanceID0",
             "Value": {
-                "Fn::Join": [
-                    "",
-                    [
-                        "NAT Server IP:",
-                        {
-                            "Fn::GetAtt": [
-                                "NATInstance",
-                                "PublicIp"
-                            ]
-                        }
-                    ]
-                ]
+                "Ref": "NATInstance0"
             }
         },
-        "NATInstance": {
-            "Description": "NAT InstanceID",
+        "NATInstance1": {
+            "Description": "NAT InstanceID1",
             "Value": {
-                "Ref": "NATInstance"
+                "Ref": "NATInstance1"
+            }
+        },
+        "NATInstance2": {
+            "Description": "NAT InstanceID2",
+            "Value": {
+                "Ref": "NATInstance2"
             }
         },
         "VPC": {
@@ -352,23 +354,11 @@
                 "Ref": "PublicSubnet0"
             }
         },
-        "PrivateSubnet2": {
+        "PublicSubnet1": {
+            "Description": "Subnet-ID of the Public Subnet",
             "Value": {
-                "Ref": "PrivateSubnet2"
-            },
-            "Description": "Subnet-ID of the PrivateSubnet2"
-        },
-        "PrivateSubnet1": {
-            "Value": {
-                "Ref": "PrivateSubnet1"
-            },
-            "Description": "Subnet-ID of the PrivateSubnet1"
-        },
-        "PrivateSubnet0": {
-            "Value": {
-                "Ref": "PrivateSubnet0"
-            },
-            "Description": "Subnet-ID of the PrivateSubnet0"
+                "Ref": "PublicSubnet1"
+            }
         },
         "PublicSubnet2": {
             "Description": "Subnet-ID of the Public Subnet",
@@ -376,11 +366,23 @@
                 "Ref": "PublicSubnet2"
             }
         },
-        "PublicSubnet1": {
-            "Description": "Subnet-ID of the Public Subnet",
+        "PrivateSubnet0": {
             "Value": {
-                "Ref": "PublicSubnet1"
-            }
+                "Ref": "PrivateSubnet0"
+            },
+            "Description": "Subnet-ID of the PrivateSubnet0"
+        },
+        "PrivateSubnet1": {
+            "Value": {
+                "Ref": "PrivateSubnet1"
+            },
+            "Description": "Subnet-ID of the PrivateSubnet1"
+        },
+        "PrivateSubnet2": {
+            "Value": {
+                "Ref": "PrivateSubnet2"
+            },
+            "Description": "Subnet-ID of the PrivateSubnet2"
         }
     },
     "Resources": {
@@ -407,8 +409,14 @@
                     "AutoScaledInstanceSecurityGroup": {
                         "Ref": "AutoScaledInstanceSecurityGroup0"
                     },
-                    "InstallMagentoSampleData": {
-                        "Ref": "InstallMagentoSampleData"
+                    "MagentoReleaseMedia": {
+                        "Ref": "MagentoReleaseMedia"
+                    },
+                    "MagentoSampleData": {
+                        "Ref": "MagentoSampleData"
+                    },
+                    "SSLCertificateId": {
+                        "Ref": "SSLCertificateId"
                     },
                     "WebServerMinSize": {
                         "Ref": "WebServerMinSize"
@@ -637,13 +645,13 @@
                 }
             }
         },
-        "NATInstance": {
+        "NATInstance0": {
             "Type": "AWS::EC2::Instance",
             "Properties": {
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "NAT Instance (QuickStart)"
+                        "Value": "NATInstance0 (QuickStart)"
                     }
                 ],
                 "InstanceType": {
@@ -655,7 +663,7 @@
                 "NetworkInterfaces": [
                     {
                         "NetworkInterfaceId": {
-                            "Ref": "NATInterface"
+                            "Ref": "NATInstance0Interface"
                         },
                         "DeviceIndex": "0"
                     }
@@ -682,13 +690,13 @@
                 }
             }
         },
-        "NATEIP": {
+        "NATInstance0EIP": {
             "Type": "AWS::EC2::EIP",
             "Properties": {
                 "Domain": "vpc"
             }
         },
-        "NATInterface": {
+        "NATInstance0Interface": {
             "Type": "AWS::EC2::NetworkInterface",
             "Properties": {
                 "SubnetId": {
@@ -709,17 +717,189 @@
                 ]
             }
         },
-        "AssociateInterfaceNAT": {
+        "AssociateNATInstance0Interface": {
             "Type": "AWS::EC2::EIPAssociation",
             "Properties": {
                 "AllocationId": {
                     "Fn::GetAtt": [
-                        "NATEIP",
+                        "NATInstance0EIP",
                         "AllocationId"
                     ]
                 },
                 "NetworkInterfaceId": {
-                    "Ref": "NATInterface"
+                    "Ref": "NATInstance0Interface"
+                }
+            }
+        },
+        "NATInstance1": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "NATInstance1 (QuickStart)"
+                    }
+                ],
+                "InstanceType": {
+                    "Ref": "NATInstanceType"
+                },
+                "KeyName": {
+                    "Ref": "KeyName"
+                },
+                "NetworkInterfaces": [
+                    {
+                        "NetworkInterfaceId": {
+                            "Ref": "NATInstance1Interface"
+                        },
+                        "DeviceIndex": "0"
+                    }
+                ],
+                "ImageId": {
+                    "Fn::FindInMap": [
+                        "AWSNATAMI",
+                        {
+                            "Ref": "AWS::Region"
+                        },
+                        "AMI"
+                    ]
+                },
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "#!/bin/bash\n",
+                                "yum update -y\n"
+                            ]
+                        ]
+                    }
+                }
+            }
+        },
+        "NATInstance1EIP": {
+            "Type": "AWS::EC2::EIP",
+            "Properties": {
+                "Domain": "vpc"
+            }
+        },
+        "NATInstance1Interface": {
+            "Type": "AWS::EC2::NetworkInterface",
+            "Properties": {
+                "SubnetId": {
+                    "Ref": "PublicSubnet1"
+                },
+                "Description": "External interface for the NAT instance",
+                "GroupSet": [
+                    {
+                        "Ref": "NATSecurityGroup"
+                    }
+                ],
+                "SourceDestCheck": "false",
+                "Tags": [
+                    {
+                        "Key": "Network",
+                        "Value": "Public"
+                    }
+                ]
+            }
+        },
+        "AssociateNATInstance1Interface": {
+            "Type": "AWS::EC2::EIPAssociation",
+            "Properties": {
+                "AllocationId": {
+                    "Fn::GetAtt": [
+                        "NATInstance1EIP",
+                        "AllocationId"
+                    ]
+                },
+                "NetworkInterfaceId": {
+                    "Ref": "NATInstance1Interface"
+                }
+            }
+        },
+        "NATInstance2": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "NATInstance2 (QuickStart)"
+                    }
+                ],
+                "InstanceType": {
+                    "Ref": "NATInstanceType"
+                },
+                "KeyName": {
+                    "Ref": "KeyName"
+                },
+                "NetworkInterfaces": [
+                    {
+                        "NetworkInterfaceId": {
+                            "Ref": "NATInstance2Interface"
+                        },
+                        "DeviceIndex": "0"
+                    }
+                ],
+                "ImageId": {
+                    "Fn::FindInMap": [
+                        "AWSNATAMI",
+                        {
+                            "Ref": "AWS::Region"
+                        },
+                        "AMI"
+                    ]
+                },
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "#!/bin/bash\n",
+                                "yum update -y\n"
+                            ]
+                        ]
+                    }
+                }
+            }
+        },
+        "NATInstance2EIP": {
+            "Type": "AWS::EC2::EIP",
+            "Properties": {
+                "Domain": "vpc"
+            }
+        },
+        "NATInstance2Interface": {
+            "Type": "AWS::EC2::NetworkInterface",
+            "Properties": {
+                "SubnetId": {
+                    "Ref": "PublicSubnet2"
+                },
+                "Description": "External interface for the NAT instance",
+                "GroupSet": [
+                    {
+                        "Ref": "NATSecurityGroup"
+                    }
+                ],
+                "SourceDestCheck": "false",
+                "Tags": [
+                    {
+                        "Key": "Network",
+                        "Value": "Public"
+                    }
+                ]
+            }
+        },
+        "AssociateNATInstance2Interface": {
+            "Type": "AWS::EC2::EIPAssociation",
+            "Properties": {
+                "AllocationId": {
+                    "Fn::GetAtt": [
+                        "NATInstance2EIP",
+                        "AllocationId"
+                    ]
+                },
+                "NetworkInterfaceId": {
+                    "Ref": "NATInstance2Interface"
                 }
             }
         },
@@ -882,7 +1062,7 @@
                 },
                 "DestinationCidrBlock": "0.0.0.0/0",
                 "InstanceId": {
-                    "Ref": "NATInstance"
+                    "Ref": "NATInstance2"
                 }
             }
         },
@@ -1071,7 +1251,7 @@
                 },
                 "DestinationCidrBlock": "0.0.0.0/0",
                 "InstanceId": {
-                    "Ref": "NATInstance"
+                    "Ref": "NATInstance1"
                 }
             }
         },
@@ -1260,7 +1440,7 @@
                 },
                 "DestinationCidrBlock": "0.0.0.0/0",
                 "InstanceId": {
-                    "Ref": "NATInstance"
+                    "Ref": "NATInstance0"
                 }
             }
         },
