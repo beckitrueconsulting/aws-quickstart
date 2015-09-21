@@ -573,7 +573,7 @@
                         "DC1"
                     ]
                 },
-                "InstanceType"       : "m3.xlarge",
+                "InstanceType"       : "m4.xlarge",
                 "SubnetId"           : {
                     "Ref" : "PrivateSubnet1"
                 },
@@ -626,7 +626,7 @@
                         "DC2"
                     ]
                 },
-                "InstanceType" : "m3.xlarge",
+                "InstanceType" : "m4.xlarge",
                 "SubnetId"     : {
                     "Ref" : "PrivateSubnet2"
                 },
@@ -662,7 +662,7 @@
                         "RDGW1"
                     ]
                 },
-                "InstanceType" : "m3.xlarge",
+                "InstanceType" : "m4.xlarge",
                 "SubnetId"     : {
                     "Ref" : "DMZSubnet"
                 },
@@ -717,7 +717,7 @@
                         "RDGW2"
                     ]
                 },
-                "InstanceType" : "m3.xlarge",
+                "InstanceType" : "m4.xlarge",
                 "SubnetId"     : {
                     "Ref" : "DMZ2Subnet"
                 },

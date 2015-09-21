@@ -9,33 +9,23 @@
         "ADInstanceType" : {
             "Description" : "Amazon EC2 instance type for the first Active Directory Instance",
             "Type"        : "String",
-            "Default"     : "m3.xlarge",
+            "Default"     : "m4.xlarge",
             "AllowedValues" : [
-                "m1.small",
-                "m1.medium",
-                "m1.large",
-                "m2.xlarge",
-                "m2.2xlarge",
-                "m2.4xlarge",
-                "m3.xlarge",
-                "c1.medium",
-                "c1.xlarge"
+                "m4.large",
+                "m4.xlarge",
+                "m4.2xlarge",
+                "m4.4xlarge"
             ]
         },
         "AD2InstanceType" : {
             "Description" : "Amazon EC2 instance type for the second Active Directory Instance",
             "Type"        : "String",
-            "Default"     : "m3.xlarge",
+            "Default"     : "m4.xlarge",
             "AllowedValues" : [
-                "m1.small",
-                "m1.medium",
-                "m1.large",
-                "m2.xlarge",
-                "m2.2xlarge",
-                "m2.4xlarge",
-                "m3.xlarge",
-                "c1.medium",
-                "c1.xlarge"
+                "m4.large",
+                "m4.xlarge",
+                "m4.2xlarge",
+                "m4.4xlarge"
             ]
         },
         "NATInstanceType" : {
@@ -50,18 +40,12 @@
         "RDGWInstanceType" : {
             "Description" : "Amazon EC2 instance type for the Remote Desktop Gatweway Instance",
             "Type"        : "String",
-            "Default"     : "m3.xlarge",
+            "Default"     : "m4.xlarge",
             "AllowedValues" : [
-                "m1.small",
-                "m1.medium",
-                "m1.large",
-                "m1.xlarge",
-                "m2.xlarge",
-                "m2.2xlarge",
-                "m2.4xlarge",
-                "m3.xlarge",
-                "c1.medium",
-                "c1.xlarge"
+                "m4.large",
+                "m4.xlarge",
+                "m4.2xlarge",
+                "m4.4xlarge"
             ]
         },
         "ADServerNetBIOSName1" : {
@@ -123,16 +107,7 @@
     },
     "Mappings"                 : {
         "AWSInstanceType2Arch" : {
-            "m1.small" : {
-                "Arch" : "64"
-            },
-            "m1.medium" : {
-                "Arch" : "64"
-            },
-            "m1.large"  : {
-                "Arch" : "64"
-            },
-            "m1.xlarge" : {
+            "m4.large"  : {
                 "Arch" : "64"
             },
             "t2.small" : {
@@ -141,22 +116,13 @@
             "t2.medium" : {
                 "Arch" : "64"
             },
-            "m2.xlarge" : {
+            "m4.xlarge" : {
                 "Arch" : "64"
             },
-            "m2.2xlarge" : {
+            "m4.2xlarge" : {
                 "Arch" : "64"
             },
-            "m2.4xlarge" : {
-                "Arch" : "64"
-            },
-            "m3.xlarge"  : {
-                "Arch" : "64"
-            },
-            "c1.medium"  : {
-                "Arch" : "64"
-            },
-            "c1.xlarge"  : {
+            "m4.4xlarge" : {
                 "Arch" : "64"
             }
         },
