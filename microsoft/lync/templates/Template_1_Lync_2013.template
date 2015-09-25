@@ -163,31 +163,31 @@
     "Mappings"                 : {
         "AWSWinRegionMap" : {
             "us-west-1" : {
-                "WS2012R2" : "ami-bf2dd3fb"
+                "WS2012R2" : "ami-890af0cd"
             },
             "us-west-2" : {
-                "WS2012R2" : "ami-4dbcb67d"
+                "WS2012R2" : "ami-dfccd1ef"
             },
             "us-east-1" : {
-                "WS2012R2" : "ami-cd9339a6"
+                "WS2012R2" : "ami-c9cea0ac"
             },
             "eu-central-1" : {
-                "WS2012R2" : "ami-86393e9b"
+                "WS2012R2" : "ami-3e737323"
             },
             "sa-east-1" : {
-                "WS2012R2" : "ami-89ff7794"
+                "WS2012R2" : "ami-3bce5b26"
             },
             "ap-northeast-1" : {
-                "WS2012R2" : "ami-b4ce74b4"
+                "WS2012R2" : "ami-4623a846"
             },
             "eu-west-1" : {
-                "WS2012R2" : "ami-1a92cf6d"
+                "WS2012R2" : "ami-abe9c9dc"
             },
             "ap-southeast-2" : {
-                "WS2012R2" : "ami-7ddb9847"
+                "WS2012R2" : "ami-f53679cf"
             },
             "ap-southeast-1" : {
-                "WS2012R2" : "ami-12737d40"
+                "WS2012R2" : "ami-58efe50a"
             }
         }
     },
