@@ -194,15 +194,15 @@
       },
       "DSMAMI" : 
       {
-        "us-east-1" : {"BYOL" : "ami-0268556a", "25" : "ami-00685568", "50" : "ami-00685568", "100" : "ami-00685568", "200" : "ami-00685568"  },
-        "us-west-1" : {"BYOL" : "ami-332ccf77", "25" : "ami-312ccf75", "50" : "ami-312ccf75", "100" : "ami-312ccf75", "200" : "ami-312ccf75"  },
-        "us-west-2" : {"BYOL" : "ami-89a68eb9", "25" : "ami-8da68ebd", "50" : "ami-8da68ebd", "100" : "ami-8da68ebd", "200" : "ami-8da68ebd"  },
-        "eu-west-1" : {"BYOL" : "ami-392f484e", "25" : "ami-3b2f484c", "50" : "ami-3b2f484c", "100" : "ami-3b2f484c", "200" : "ami-3b2f484c"  },
-        "eu-central-1" : {"BYOL" : "", "25" : "ami-3c457921", "50" : "ami-3c457921", "100" : "ami-3c457921", "200" : "ami-3c457921"  },
-        "ap-southeast-1" : {"BYOL" : "ami-de72408c", "25" : "ami-c872409a", "50" : "ami-c872409a", "100" : "ami-c872409a", "200" : "ami-c872409a"  },
-        "ap-northeast-1" : {"BYOL" : "ami-bcae57bc", "25" : "ami-149c6514", "50" : "ami-149c6514", "100" : "ami-149c6514", "200" : "ami-149c6514"  },
-        "ap-southeast-2" : {"BYOL" : "ami-dd4634e7", "25" : "ami-d94634e3", "50" : "ami-d94634e3", "100" : "ami-d94634e3", "200" : "ami-d94634e3"  },
-        "sa-east-1" : {"BYOL" : "ami-d76bd1ca", "25" : "ami-d36bd1ce", "50" : "ami-d36bd1ce", "100" : "ami-d36bd1ce", "200" : "ami-d36bd1ce"  }  
+        "us-east-1" : {"BYOL" : "ami-39b93f52", "25" : "ami-69c4ba0c", "50" : "ami-69c4ba0c", "100" : "ami-69c4ba0c", "200" : "ami-69c4ba0c"  },
+        "us-west-1" : {"BYOL" : "ami-553fc411", "25" : "ami-3983447d", "50" : "ami-3983447d", "100" : "ami-3983447d", "200" : "ami-3983447d"  },
+        "us-west-2" : {"BYOL" : "ami-e37162d3", "25" : "ami-272f3717", "50" : "ami-272f3717", "100" : "ami-272f3717", "200" : "ami-272f3717"  },
+        "eu-west-1" : {"BYOL" : "ami-3ff8dc48", "25" : "ami-45a48d32", "50" : "ami-45a48d32", "100" : "ami-45a48d32", "200" : "ami-45a48d32"  },
+        "eu-central-1" : {"BYOL" : "ami-6a1c1d77", "25" : "ami-0c8c8f11", "50" : "ami-0c8c8f11", "100" : "ami-0c8c8f11", "200" : "ami-0c8c8f11"  },
+        "ap-southeast-1" : {"BYOL" : "ami-10181342", "25" : "ami-507d6a02", "50" : "ami-507d6a02", "100" : "ami-507d6a02", "200" : "ami-507d6a02"  },
+        "ap-northeast-1" : {"BYOL" : "ami-908c0390", "25" : "ami-fcd548fc", "50" : "ami-fcd548fc", "100" : "ami-fcd548fc", "200" : "ami-fcd548fc"  },
+        "ap-southeast-2" : {"BYOL" : "ami-a5367a9f", "25" : "ami-072d643d", "50" : "ami-072d643d", "100" : "ami-072d643d", "200" : "ami-072d643d"  },
+        "sa-east-1" : {"BYOL" : "ami-5d8a0040", "25" : "ami-9116828c", "50" : "ami-9116828c", "100" : "ami-9116828c", "200" : "ami-9116828c"  }  
       },
       "DSMSIZE" :
       {

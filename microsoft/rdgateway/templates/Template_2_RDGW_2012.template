@@ -109,6 +109,15 @@
             },
             "c1.xlarge"  : {
                 "Arch" : "64"
+            },
+            "m4.xlarge" : {
+                "Arch" : "64"
+            },
+            "m4.2xlarge" : {
+                "Arch" : "64"
+            },
+            "m4.4xlarge" : {
+                "Arch" : "64"
             }
         },
         "AWSRegionArch2AMI"    : {
