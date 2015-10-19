@@ -9,7 +9,7 @@
       "AllowedPattern" : "[0-9]+\\..+"
     },
    "VPCID" : {
-      "Type" : "String",
+      "Type"        : "AWS::EC2::VPC::Id",
       "Description" : "Enter the VPC-ID the Deep Security Manager will be deployed into"
     }, 
    "DSMLicenseType" : {
@@ -18,9 +18,8 @@
      "AllowedValues" : ["25","50","100","200", "BYOL"]  
    }, 
    "AllowSSH" : {
-      "Type" : "String",
+      "Type"        : "AWS::EC2::SecurityGroup::Id",
       "Description" : "Enter the existing security group ID that new instances should allow SSH from",
-      "AllowedPattern" : "^sg-[a-zA-Z0-9]{8,8}$",
       "ConstraintDescription" : "Must be a Security Group ID"
      
     },
@@ -40,19 +39,19 @@
       "Description" : "Enter the CIDR range for the second incident responce subnet"
     },
     "PrivateSubnet1" : {
-      "Type" : "String",
+	  "Type"        : "AWS::EC2::Subnet::Id",
       "Description" : "Enter the subnet ID of the first private subnet"
     },    
     "PublicSubnet1" : {
-      "Type" : "String",
+	  "Type"        : "AWS::EC2::Subnet::Id",
       "Description" : "Enter the subnet ID of the first private subnet"
     },    
     "PublicSubnet2" : {
-      "Type" : "String",
+	  "Type"        : "AWS::EC2::Subnet::Id",
       "Description" : "Enter the subnet ID of the first private subnet"
     },     
     "PrivateSubnet2" : {
-      "Type" : "String",
+	  "Type"        : "AWS::EC2::Subnet::Id",
       "Description" : "Enter the subnet ID of the second private subnet"
     },
     "RDSInstanceType" : {
@@ -163,7 +162,7 @@
       "AllowedPattern" : "[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"
     }, 
     "KeyPair" : {
-      "Type" : "String",
+      "Type"        : "AWS::EC2::KeyPair::KeyName",
       "Description" : "Key pair to use for instances to allow ssh access"
           
     }
@@ -194,15 +193,15 @@
       },
       "DSMAMI" : 
       {
-        "us-east-1" : {"BYOL" : "ami-39b93f52", "25" : "ami-69c4ba0c", "50" : "ami-69c4ba0c", "100" : "ami-69c4ba0c", "200" : "ami-69c4ba0c"  },
-        "us-west-1" : {"BYOL" : "ami-553fc411", "25" : "ami-3983447d", "50" : "ami-3983447d", "100" : "ami-3983447d", "200" : "ami-3983447d"  },
-        "us-west-2" : {"BYOL" : "ami-e37162d3", "25" : "ami-272f3717", "50" : "ami-272f3717", "100" : "ami-272f3717", "200" : "ami-272f3717"  },
-        "eu-west-1" : {"BYOL" : "ami-3ff8dc48", "25" : "ami-45a48d32", "50" : "ami-45a48d32", "100" : "ami-45a48d32", "200" : "ami-45a48d32"  },
-        "eu-central-1" : {"BYOL" : "ami-6a1c1d77", "25" : "ami-0c8c8f11", "50" : "ami-0c8c8f11", "100" : "ami-0c8c8f11", "200" : "ami-0c8c8f11"  },
-        "ap-southeast-1" : {"BYOL" : "ami-10181342", "25" : "ami-507d6a02", "50" : "ami-507d6a02", "100" : "ami-507d6a02", "200" : "ami-507d6a02"  },
-        "ap-northeast-1" : {"BYOL" : "ami-908c0390", "25" : "ami-fcd548fc", "50" : "ami-fcd548fc", "100" : "ami-fcd548fc", "200" : "ami-fcd548fc"  },
-        "ap-southeast-2" : {"BYOL" : "ami-a5367a9f", "25" : "ami-072d643d", "50" : "ami-072d643d", "100" : "ami-072d643d", "200" : "ami-072d643d"  },
-        "sa-east-1" : {"BYOL" : "ami-5d8a0040", "25" : "ami-9116828c", "50" : "ami-9116828c", "100" : "ami-9116828c", "200" : "ami-9116828c"  }  
+        "us-east-1" : {"BYOL" : "ami-7fc4ba1a", "25" : "ami-69c4ba0c", "50" : "ami-69c4ba0c", "100" : "ami-69c4ba0c", "200" : "ami-69c4ba0c"  },
+        "us-west-1" : {"BYOL" : "ami-25834461", "25" : "ami-3983447d", "50" : "ami-3983447d", "100" : "ami-3983447d", "200" : "ami-3983447d"  },
+        "us-west-2" : {"BYOL" : "ami-df2e36ef", "25" : "ami-272f3717", "50" : "ami-272f3717", "100" : "ami-272f3717", "200" : "ami-272f3717"  },
+        "eu-west-1" : {"BYOL" : "ami-f1a58c86", "25" : "ami-45a48d32", "50" : "ami-45a48d32", "100" : "ami-45a48d32", "200" : "ami-45a48d32"  },
+        "eu-central-1" : {"BYOL" : "ami-e28d8eff", "25" : "ami-0c8c8f11", "50" : "ami-0c8c8f11", "100" : "ami-0c8c8f11", "200" : "ami-0c8c8f11"  },
+        "ap-southeast-1" : {"BYOL" : "ami-447d6a16", "25" : "ami-507d6a02", "50" : "ami-507d6a02", "100" : "ami-507d6a02", "200" : "ami-507d6a02"  },
+        "ap-northeast-1" : {"BYOL" : "ami-0cd4490c", "25" : "ami-fcd548fc", "50" : "ami-fcd548fc", "100" : "ami-fcd548fc", "200" : "ami-fcd548fc"  },
+        "ap-southeast-2" : {"BYOL" : "ami-052d643f", "25" : "ami-072d643d", "50" : "ami-072d643d", "100" : "ami-072d643d", "200" : "ami-072d643d"  },
+        "sa-east-1" : {"BYOL" : "ami-9f168282", "25" : "ami-9116828c", "50" : "ami-9116828c", "100" : "ami-9116828c", "200" : "ami-9116828c"  }  
       },
       "DSMSIZE" :
       {
