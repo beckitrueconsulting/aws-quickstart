@@ -38,20 +38,38 @@ name=MongoDB Repository
 baseurl=http://repo.mongodb.org/yum/amazon/2013.03/mongodb-org/3.0/x86_64/
 gpgcheck=0
 enabled=1" > /etc/yum.repos.d/mongodb-org-${version}.repo
+
+#echo "[10gen]
+#name=10gen Repository
+#baseurl=http://downloads-distro.mongodb.org/repo/redhat/os/x86_64
+#gpgcheck=0" | tee -a /etc/yum.repos.d/10gen.repo
+
+
 else
     echo "[mongodb-org-${version}]
 name=MongoDB 2.6 Repository
 baseurl=http://downloads-distro.mongodb.org/repo/redhat/os/x86_64/
 gpgcheck=0
 enabled=1" > /etc/yum.repos.d/mongodb-org-${version}.repo
+
+
+#echo "[10gen]
+#name=10gen Repository
+#baseurl=http://downloads-distro.mongodb.org/repo/redhat/os/x86_64
+#gpgcheck=0" | tee -a /etc/yum.repos.d/10gen.repo
+
 fi
 
 # To be safe, wait a bit for flush
 sleep 5
 
+yum --enablerepo=epel install node npm -y
+
 yum install -y mongodb-org
 yum install -y munin-node
 yum install -y libcgroup
+yum -y install mongo-10gen-server mongodb-org-shell
+yum -y install sysstat
 
 #################################################################
 #  Figure out what kind of node we are and set some values
@@ -224,12 +242,16 @@ if [ "${NODE_TYPE}" != "Config" ]; then
       while [ $c -lt $MICROSHARDS ]
       do
           (( port++ ))
+          sed -i "s/bind_ip.*/#bind_ip=127\.0\.\.0\.1/g" /etc/mongod.conf
+          sed -i "s/bindIp.*/#bindIp=127\.0\.\.0\.1/g" /etc/mongod.conf
+
           cp /etc/mongod.conf /etc/mongod${c}.conf
           sed -i "s/.*mongod\.log/logpath=\/log\/mongod${c}.log/g" /etc/mongod${c}.conf
           sed -i "s/.*port=27017/port=${port}/g" /etc/mongod${c}.conf
           sed -i "s/dbpath.*/dbpath=\\/data\\/${SHARD}-rs${c}/g" /etc/mongod${c}.conf
           sed -i "s/pidfilepath.*/pidfilepath=\/var\/run\/mongodb\/mongod${c}.pid/g" /etc/mongod${c}.conf
           sed -i "s/bind_ip.*/#bind_ip=127\.0\.\.0\.1/g" /etc/mongod${c}.conf
+          sed -i "s/bindIp.*/#bindIp=127\.0\.\.0\.1/g" /etc/mongod${c}.conf
           sed -i "s/#replSet.*/replSet=${SHARD}-rs${c}/g" /etc/mongod${c}.conf
 
           cp /etc/init.d/mongod /etc/init.d/mongod${c}
@@ -271,6 +293,7 @@ if [ "${NODE_TYPE}" != "Config" ]; then
       done
     else #Karthik
      sed -i "s/bind_ip.*/#bind_ip=127\.0\.\.0\.1/g" /etc/mongod.conf
+     sed -i "s/bindIp.*/#bindIp=127\.0\.\.0\.1/g" /etc/mongod.conf
      sed -i "s/.*port=27017/port=${port}/g" /etc/mongod.conf
      sed -i "s/#replSet.*/replSet=${SHARD}-rs/g" /etc/mongod.conf
 
@@ -436,6 +459,7 @@ EOF
             sed -i 's/dbpath.*/#dbpath=/g' /etc/mongos.conf
             sed -i 's/pidfilepath.*/pidfilepath=\/var\/run\/mongodb\/mongos.pid/g' /etc/mongos.conf
             sed -i 's/bind_ip.*/#bind_ip=127\.0\.\.0\.1/g' /etc/mongos.conf
+            sed -i 's/bindIp.*/#bindIp=127\.0\.\.0\.1/g' /etc/mongos.conf
             sed -i "s/#replSet.*/configdb=${CONFIGADDRS[0]}:27030,${CONFIGADDRS[1]}:27030,${CONFIGADDRS[2]}:27030/g" /etc/mongos.conf
 
             cp /etc/init.d/mongod /etc/init.d/mongos
@@ -502,6 +526,7 @@ else
     sed -i 's/# location.*/configsvr=true/g' /etc/mongod.conf
 
     sed -i 's/bind_ip.*/#bind_ip=127\.0\.\.0\.1/g' /etc/mongod.conf
+    sed -i 's/bindIp.*/#bindIp=127\.0\.\.0\.1/g' /etc/mongod.conf
 
     chkconfig mongod on
     service mongod start
