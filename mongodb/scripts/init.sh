@@ -39,11 +39,6 @@ baseurl=http://repo.mongodb.org/yum/amazon/2013.03/mongodb-org/3.0/x86_64/
 gpgcheck=0
 enabled=1" > /etc/yum.repos.d/mongodb-org-${version}.repo
 
-#echo "[10gen]
-#name=10gen Repository
-#baseurl=http://downloads-distro.mongodb.org/repo/redhat/os/x86_64
-#gpgcheck=0" | tee -a /etc/yum.repos.d/10gen.repo
-
 
 else
     echo "[mongodb-org-${version}]
@@ -51,12 +46,6 @@ name=MongoDB 2.6 Repository
 baseurl=http://downloads-distro.mongodb.org/repo/redhat/os/x86_64/
 gpgcheck=0
 enabled=1" > /etc/yum.repos.d/mongodb-org-${version}.repo
-
-
-#echo "[10gen]
-#name=10gen Repository
-#baseurl=http://downloads-distro.mongodb.org/repo/redhat/os/x86_64
-#gpgcheck=0" | tee -a /etc/yum.repos.d/10gen.repo
 
 fi
 
@@ -156,6 +145,24 @@ echo "* soft nofile 64000
 #################################################################
 # Setup MongoDB servers and config nodes
 #################################################################
+    
+echo "net:" > mongod.conf
+echo "  port:" >> mongod.conf
+echo "" >> mongod.conf
+echo "systemLog:" >> mongod.conf
+echo "  destination: file" >> mongod.conf
+echo "  logAppend: true" >> mongod.conf
+echo "  path: /log/mongod.log" >> mongod.conf
+echo "" >> mongod.conf
+echo "storage:" >> mongod.conf
+echo "  dbPath: /data" >> mongod.conf
+echo "  journal:" >> mongod.conf
+echo "    enabled: true" >> mongod.conf
+echo "" >> mongod.conf
+echo "processManagement:" >> mongod.conf
+echo "  fork: true" >> mongod.conf
+echo "  pidFilePath: /var/run/mongodb.pid" >> mongod.conf
+    
 if [ "${NODE_TYPE}" != "Config" ]; then
     #################################################################
     #  Enable munin plugins for iostat and iostat_ios
@@ -241,26 +248,20 @@ if [ "${NODE_TYPE}" != "Config" ]; then
       echo "" > /etc/cgconfig.conf
       while [ $c -lt $MICROSHARDS ]
       do
+          cp mongod.conf /etc/mongod${c}.conf
           (( port++ ))
-          sed -i "s/bind_ip.*/#bind_ip=127\.0\.\.0\.1/g" /etc/mongod.conf
-          sed -i "s/bindIp.*/#bindIp=127\.0\.\.0\.1/g" /etc/mongod.conf
 
           cp /etc/mongod.conf /etc/mongod${c}.conf
-          sed -i "s/.*mongod\.log/logpath=\/log\/mongod${c}.log/g" /etc/mongod${c}.conf
-          sed -i "s/.*port=27017/port=${port}/g" /etc/mongod${c}.conf
-          sed -i "s/dbpath.*/dbpath=\\/data\\/${SHARD}-rs${c}/g" /etc/mongod${c}.conf
-          sed -i "s/pidfilepath.*/pidfilepath=\/var\/run\/mongodb\/mongod${c}.pid/g" /etc/mongod${c}.conf
-          sed -i "s/bind_ip.*/#bind_ip=127\.0\.\.0\.1/g" /etc/mongod${c}.conf
-          sed -i "s/bindIp.*/#bindIp=127\.0\.\.0\.1/g" /etc/mongod${c}.conf
-          sed -i "s/#replSet.*/replSet=${SHARD}-rs${c}/g" /etc/mongod${c}.conf
+          sed -i "s/.*path:.*/  path: \/log\/mongod${c}.log/g" /etc/mongod${c}.conf
+          sed -i "s/.*port:/  port: ${port}/g" /etc/mongod${c}.conf
+          sed -i "s/.*dbPath:.*/  dbPath: \\/data\\/${SHARD}-rs${c}/g" /etc/mongod${c}.conf
+          sed -i "s/.*pidFilePath:.*/  pidFilePath: \/var\/run\/mongodb\/mongod${c}.pid/g" /etc/mongod${c}.conf
+          echo "replication::" >> /etc/mongod${c}.conf
+          echo "  replSetName: ${SHARD}-rs${c}" >> /etc/mongod${c}.conf
 
           cp /etc/init.d/mongod /etc/init.d/mongod${c}
           sed -i "s/CONFIGFILE=.*/CONFIGFILE=\"\/etc\/mongod${c}\.conf\"/g" /etc/init.d/mongod${c}
           sed -i "s/SYSCONFIG=.*/SYSCONFIG=\"\/etc\/sysconfig\/mongod${c}\"/g" /etc/init.d/mongod${c}
-
-          #cgconf="group mongod${c} {perm {admin {uid = mongod;gid = mongod;}task {uid = mongod;gid = mongod;}} memory{memory.limit_in_bytes = ${memory}G;}}"
-          #echo | tee -a /etc/cgconfig.conf
-          #echo $cgconf | tee -a /etc/cgconfig.conf
 
           echo "mount {
                 cpuset  = /cgroup/cpuset;
@@ -292,10 +293,10 @@ if [ "${NODE_TYPE}" != "Config" ]; then
           (( c++ ))
       done
     else #Karthik
-     sed -i "s/bind_ip.*/#bind_ip=127\.0\.\.0\.1/g" /etc/mongod.conf
-     sed -i "s/bindIp.*/#bindIp=127\.0\.\.0\.1/g" /etc/mongod.conf
-     sed -i "s/.*port=27017/port=${port}/g" /etc/mongod.conf
-     sed -i "s/#replSet.*/replSet=${SHARD}-rs/g" /etc/mongod.conf
+     cp mongod.conf /etc/mongod.conf
+     sed -i "s/.*port:/  port: ${port}/g" /etc/mongod.conf
+     echo "replication::" >> /etc/mongod.conf
+     echo "  replSetName: ${SHARD}" >> /etc/mongod.conf
 
      echo CGROUP_DAEMON="memory:mongod" > /etc/sysconfig/mongod
 
@@ -454,13 +455,16 @@ EOF
             #Setup a mongos service
             #################################################################
             cp /etc/mongod.conf /etc/mongos.conf
-            sed -i 's/.*mongod\.log/logpath=\/log\/mongos.log/g' /etc/mongos.conf
-            sed -i 's/.*port=27017/port=27017/g' /etc/mongos.conf
-            sed -i 's/dbpath.*/#dbpath=/g' /etc/mongos.conf
-            sed -i 's/pidfilepath.*/pidfilepath=\/var\/run\/mongodb\/mongos.pid/g' /etc/mongos.conf
-            sed -i 's/bind_ip.*/#bind_ip=127\.0\.\.0\.1/g' /etc/mongos.conf
-            sed -i 's/bindIp.*/#bindIp=127\.0\.\.0\.1/g' /etc/mongos.conf
-            sed -i "s/#replSet.*/configdb=${CONFIGADDRS[0]}:27030,${CONFIGADDRS[1]}:27030,${CONFIGADDRS[2]}:27030/g" /etc/mongos.conf
+            sed -i 's/.*path:.*/  path:\/log\/mongos.log/g' /etc/mongos.conf
+            sed -i 's/.*port:/port: 27017/g' /etc/mongos.conf
+            sed -i 's/.*dbPath:.*/#/g' /etc/mongos.conf
+            sed -i 's/.*storage:.*/#/g' /etc/mongos.conf
+            sed -i 's/.*journal:.*/#/g' /etc/mongos.conf
+            sed -i 's/.*enabled:.*/#/g' /etc/mongos.conf
+            sed -i 's/.*pidFilePath:.*/  pidFilePath: \/var\/run\/mongodb\/mongos.pid/g' /etc/mongos.conf
+            echo "" >> /etc/mongos.conf
+            echo "sharding: " >> /etc/mongos.conf
+            echo "  configDB: ${CONFIGADDRS[0]}:27030,${CONFIGADDRS[1]}:27030,${CONFIGADDRS[2]}:27030" >> /etc/mongos.conf
 
             cp /etc/init.d/mongod /etc/init.d/mongos
             sed -i 's/CONFIGFILE=.*/CONFIGFILE="\/etc\/mongos\.conf"/g' /etc/init.d/mongos
@@ -520,13 +524,14 @@ else
     #################################################################
     # Modify the mongod.conf file and make this a config server
     #################################################################
-    sed -i 's/.*mongod\.log/logpath=\/data\/mongod.log/g' /etc/mongod.conf
-    sed -i 's/.*port=27017/port=27030/g' /etc/mongod.conf
-    sed -i 's/dbpath.*/dbpath=\/data/g' /etc/mongod.conf
+    cp mongod.conf /etc/mongod.conf
+    sed -i 's/.*path:.*/  path: \/data\/mongod.log/g' /etc/mongod.conf
+    sed -i 's/.*port:/  port: 27030/g' /etc/mongod.conf
+    sed -i 's/.*dbPath:.*/  dbpath: \/data/g' /etc/mongod.conf
     sed -i 's/# location.*/configsvr=true/g' /etc/mongod.conf
-
-    sed -i 's/bind_ip.*/#bind_ip=127\.0\.\.0\.1/g' /etc/mongod.conf
-    sed -i 's/bindIp.*/#bindIp=127\.0\.\.0\.1/g' /etc/mongod.conf
+    echo "" >> /etc/mongod.conf
+    echo "sharding:" >> /etc/mongod.conf
+    echo "  clusterRole: configsvr" >> /etc/mongod.conf
 
     chkconfig mongod on
     service mongod start
