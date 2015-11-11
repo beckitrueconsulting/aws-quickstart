@@ -1,6 +1,10 @@
 #!/bin/bash
 
 
+
+
+
+
 #################################################################
 # Update the OS, install packages, initialize environment vars,
 # and get the instance tags
