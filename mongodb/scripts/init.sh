@@ -2,9 +2,6 @@
 
 
 
-
-
-
 #################################################################
 # Update the OS, install packages, initialize environment vars,
 # and get the instance tags
@@ -150,7 +147,9 @@ echo "* soft nofile 64000
 #################################################################
 # Setup MongoDB servers and config nodes
 #################################################################
-    
+mkdir /var/run/mongod
+chown mongod:mongod /var/run/mongod
+
 echo "net:" > mongod.conf
 echo "  port:" >> mongod.conf
 echo "" >> mongod.conf
@@ -166,7 +165,7 @@ echo "    enabled: true" >> mongod.conf
 echo "" >> mongod.conf
 echo "processManagement:" >> mongod.conf
 echo "  fork: true" >> mongod.conf
-echo "  pidFilePath: /var/run/mongodb.pid" >> mongod.conf
+echo "  pidFilePath: /var/run/mongod/mongod.pid" >> mongod.conf
     
 if [ "${NODE_TYPE}" != "Config" ]; then
     #################################################################
@@ -260,8 +259,8 @@ if [ "${NODE_TYPE}" != "Config" ]; then
           sed -i "s/.*path:.*/  path: \/log\/mongod${c}.log/g" /etc/mongod${c}.conf
           sed -i "s/.*port:/  port: ${port}/g" /etc/mongod${c}.conf
           sed -i "s/.*dbPath:.*/  dbPath: \\/data\\/${SHARD}-rs${c}/g" /etc/mongod${c}.conf
-          sed -i "s/.*pidFilePath:.*/  pidFilePath: \/var\/run\/mongodb\/mongod${c}.pid/g" /etc/mongod${c}.conf
-          echo "replication::" >> /etc/mongod${c}.conf
+          sed -i "s/.*pidFilePath:.*/  pidFilePath: \/var\/run\/mongod\/mongod${c}.pid/g" /etc/mongod${c}.conf
+          echo "replication:" >> /etc/mongod${c}.conf
           echo "  replSetName: ${SHARD}-rs${c}" >> /etc/mongod${c}.conf
 
           cp /etc/init.d/mongod /etc/init.d/mongod${c}
@@ -300,7 +299,7 @@ if [ "${NODE_TYPE}" != "Config" ]; then
     else #Karthik
      cp mongod.conf /etc/mongod.conf
      sed -i "s/.*port:/  port: ${port}/g" /etc/mongod.conf
-     echo "replication::" >> /etc/mongod.conf
+     echo "replication:" >> /etc/mongod.conf
      echo "  replSetName: ${SHARD}" >> /etc/mongod.conf
 
      echo CGROUP_DAEMON="memory:mongod" > /etc/sysconfig/mongod
@@ -466,7 +465,7 @@ EOF
             sed -i 's/.*storage:.*/#/g' /etc/mongos.conf
             sed -i 's/.*journal:.*/#/g' /etc/mongos.conf
             sed -i 's/.*enabled:.*/#/g' /etc/mongos.conf
-            sed -i 's/.*pidFilePath:.*/  pidFilePath: \/var\/run\/mongodb\/mongos.pid/g' /etc/mongos.conf
+            sed -i 's/.*pidFilePath:.*/  pidFilePath: \/var\/run\/mongod\/mongos.pid/g' /etc/mongos.conf
             echo "" >> /etc/mongos.conf
             echo "sharding: " >> /etc/mongos.conf
             echo "  configDB: ${CONFIGADDRS[0]}:27030,${CONFIGADDRS[1]}:27030,${CONFIGADDRS[2]}:27030" >> /etc/mongos.conf
