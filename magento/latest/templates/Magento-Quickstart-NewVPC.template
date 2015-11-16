@@ -3,12 +3,12 @@
     "Description": "(0013) Deploy Magento on AWS (New VPC)",
     "Parameters": {
         "MagentoReleaseMedia": {
-            "Description": "Amazon S3 path to download magento .tar.gz file (s3://mybucket/magento-1.9.2.1.tar-2015-08-03-06-35-45.gz)",
+            "Description": "Amazon S3 path to download magento .tar.gz file (s3://mybucket/magento-1.9.2.2.tar.gz)",
             "Default": "",
             "Type": "String"
         },
         "MagentoSampleData": {
-            "Description": "[ optional ] Amazon S3 path to download magento sample data file ((s3://mybucket/magento-sample-data-1.9.1.0.tar-2015-02-11-08-18-26.gz)",
+            "Description": "[ optional ] Amazon S3 path to download magento sample data file ((s3://mybucket/magento-sample-data.tar.gz)",
             "Default": "",
             "Type": "String"
         },
@@ -17,23 +17,18 @@
             "Type": "String",
             "Default": "m3.2xlarge",
             "AllowedValues": [
-                "t1.micro",
                 "t2.micro",
                 "t2.small",
                 "t2.medium",
-                "m1.small",
-                "m1.medium",
-                "m1.large",
-                "m1.xlarge",
-                "m2.xlarge",
-                "m2.2xlarge",
-                "m2.4xlarge",
                 "m3.medium",
                 "m3.large",
                 "m3.xlarge",
                 "m3.2xlarge",
-                "c1.medium",
-                "c1.xlarge",
+                "m4.large",
+                "m4.xlarge",
+                "m4.2xlarge",
+                "m4.4xlarge",
+                "m4.10xlarge",
                 "c3.large",
                 "c3.xlarge",
                 "c3.2xlarge",
@@ -53,12 +48,7 @@
                 "i2.xlarge",
                 "i2.2xlarge",
                 "i2.4xlarge",
-                "i2.8xlarge",
-                "hi1.4xlarge",
-                "hs1.8xlarge",
-                "cr1.8xlarge",
-                "cc2.8xlarge",
-                "cg1.4xlarge"
+                "i2.8xlarge"
             ],
             "ConstraintDescription": "must be a valid EC2 instance type."
         },
@@ -195,7 +185,7 @@
         },
         "DBName": {
             "Default": "QuickstartMySQLDB",
-            "Description": "Name of MySQL DB for Magento Stack",
+            "Description": "Name of the initial database for the MySQL RDS Instance.",
             "Type": "String",
             "MinLength": "5",
             "MaxLength": "64",
@@ -236,10 +226,10 @@
             "MaxLength": "32",
             "AllowedPattern": "(?=^.{6,255}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
             "NoEcho": "True",
-            "Default": "Admin123456"
+            "Default": "Admin-123456"
         },
         "DBMultiAZ": {
-            "Default": "false",
+            "Default": "true",
             "Description": "Specifies if the database instance is a multiple Availability Zone deployment.",
             "Type": "String",
             "AllowedValues": [
@@ -325,19 +315,20 @@
     },
     "Outputs": {
         "NATInstance0": {
-            "Description": "NAT InstanceID0",
+            "Description": "NAT InstanceID 0",
             "Value": {
                 "Ref": "NATInstance0"
             }
         },
         "NATInstance1": {
-            "Description": "NAT InstanceID1",
+            "Description": "NAT InstanceID 1",
             "Value": {
                 "Ref": "NATInstance1"
             }
         },
         "NATInstance2": {
-            "Description": "NAT InstanceID2",
+            "Condition": "MoreThan3AZ",
+            "Description": "NAT InstanceID 2",
             "Value": {
                 "Ref": "NATInstance2"
             }
@@ -349,19 +340,20 @@
             }
         },
         "PublicSubnet0": {
-            "Description": "Subnet-ID of the Public Subnet",
+            "Description": "Subnet-ID of the Public Subnet0",
             "Value": {
                 "Ref": "PublicSubnet0"
             }
         },
         "PublicSubnet1": {
-            "Description": "Subnet-ID of the Public Subnet",
+            "Description": "Subnet-ID of the Public Subnet1",
             "Value": {
                 "Ref": "PublicSubnet1"
             }
         },
         "PublicSubnet2": {
-            "Description": "Subnet-ID of the Public Subnet",
+            "Condition": "MoreThan3AZ",
+            "Description": "Subnet-ID of the Public Subnet2",
             "Value": {
                 "Ref": "PublicSubnet2"
             }
@@ -379,10 +371,49 @@
             "Description": "Subnet-ID of the PrivateSubnet1"
         },
         "PrivateSubnet2": {
+            "Condition": "MoreThan3AZ",
             "Value": {
                 "Ref": "PrivateSubnet2"
             },
             "Description": "Subnet-ID of the PrivateSubnet2"
+        }
+    },
+    "Conditions": {
+        "MoreThan3AZ": {
+            "Fn::Or": [
+                {
+                    "Fn::Equals": [
+                        {
+                            "Ref": "AWS::Region"
+                        },
+                        "eu-west-1"
+                    ]
+                },
+                {
+                    "Fn::Equals": [
+                        {
+                            "Ref": "AWS::Region"
+                        },
+                        "sa-east-1"
+                    ]
+                },
+                {
+                    "Fn::Equals": [
+                        {
+                            "Ref": "AWS::Region"
+                        },
+                        "us-east-1"
+                    ]
+                },
+                {
+                    "Fn::Equals": [
+                        {
+                            "Ref": "AWS::Region"
+                        },
+                        "us-west-2"
+                    ]
+                }
+            ]
         }
     },
     "Resources": {
@@ -486,23 +517,9 @@
                         "IpProtocol": "tcp",
                         "FromPort": "22",
                         "ToPort": "22",
-                        "CidrIp": {
-                            "Ref": "RemoteAccessCIDR"
+                        "SourceSecurityGroupId": {
+                            "Ref": "NATSecurityGroup"
                         }
-                    },
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": "3389",
-                        "ToPort": "3389",
-                        "CidrIp": {
-                            "Ref": "RemoteAccessCIDR"
-                        }
-                    },
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": "3306",
-                        "ToPort": "3306",
-                        "CidrIp": "0.0.0.0/0"
                     },
                     {
                         "IpProtocol": "tcp",
@@ -521,12 +538,45 @@
                         }
                     }
                 ],
-                "SecurityGroupEgress": {
-                    "IpProtocol": "-1",
-                    "FromPort": "1",
-                    "ToPort": "65535",
-                    "CidrIp": "0.0.0.0/0"
-                }
+                "SecurityGroupEgress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "80",
+                        "ToPort": "80",
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "443",
+                        "ToPort": "443",
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "3306",
+                        "ToPort": "3306",
+                        "SourceSecurityGroupId": {
+                            "Ref": "MySQLRDSSecurityGroup0"
+                        }
+                    }
+                ]
+            }
+        },
+        "MySQLRDSSecurityGroup0": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "Allow access to MySQL Port",
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "3306",
+                        "ToPort": "3306",
+                        "CidrIp": "0.0.0.0/0"
+                    }
+                ]
             }
         },
         "AutoScaledInstanceLoopSecurityGroup0": {
@@ -594,7 +644,7 @@
                         "Ref": "VPC"
                     },
                     "AutoScaledInstanceSecurityGroup": {
-                        "Ref": "AutoScaledInstanceSecurityGroup0"
+                        "Ref": "MySQLRDSSecurityGroup0"
                     },
                     "Subnets": {
                         "Fn::Join": [
@@ -818,6 +868,7 @@
             }
         },
         "NATInstance2": {
+            "Condition": "MoreThan3AZ",
             "Type": "AWS::EC2::Instance",
             "Properties": {
                 "Tags": [
@@ -863,12 +914,14 @@
             }
         },
         "NATInstance2EIP": {
+            "Condition": "MoreThan3AZ",
             "Type": "AWS::EC2::EIP",
             "Properties": {
                 "Domain": "vpc"
             }
         },
         "NATInstance2Interface": {
+            "Condition": "MoreThan3AZ",
             "Type": "AWS::EC2::NetworkInterface",
             "Properties": {
                 "SubnetId": {
@@ -890,6 +943,7 @@
             }
         },
         "AssociateNATInstance2Interface": {
+            "Condition": "MoreThan3AZ",
             "Type": "AWS::EC2::EIPAssociation",
             "Properties": {
                 "AllocationId": {
@@ -1012,6 +1066,7 @@
             }
         },
         "PrivateSubnet2": {
+            "Condition": "MoreThan3AZ",
             "Type": "AWS::EC2::Subnet",
             "Properties": {
                 "VpcId": {
@@ -1032,7 +1087,7 @@
                 ],
                 "AvailabilityZone": {
                     "Fn::Select": [
-                        0,
+                        2,
                         {
                             "Fn::GetAZs": ""
                         }
@@ -1041,6 +1096,7 @@
             }
         },
         "PrivateSubnetRouteTable2": {
+            "Condition": "MoreThan3AZ",
             "Type": "AWS::EC2::RouteTable",
             "Properties": {
                 "VpcId": {
@@ -1055,6 +1111,7 @@
             }
         },
         "PrivateSubnetRoute2": {
+            "Condition": "MoreThan3AZ",
             "Type": "AWS::EC2::Route",
             "Properties": {
                 "RouteTableId": {
@@ -1066,7 +1123,8 @@
                 }
             }
         },
-        "Inbound0MSSQLPrivateNetworkAclEntry2": {
+        "Inbound0MySQLPrivateNetworkAclEntry2": {
+            "Condition": "MoreThan3AZ",
             "Type": "AWS::EC2::NetworkAclEntry",
             "Properties": {
                 "NetworkAclId": {
@@ -1085,7 +1143,8 @@
                 "RuleNumber": "1002"
             }
         },
-        "Inbound1MSSQLPrivateNetworkAclEntry2": {
+        "Inbound1MySQLPrivateNetworkAclEntry2": {
+            "Condition": "MoreThan3AZ",
             "Type": "AWS::EC2::NetworkAclEntry",
             "Properties": {
                 "NetworkAclId": {
@@ -1105,6 +1164,7 @@
             }
         },
         "InboundSSHPrivateNetworkAclEntry2": {
+            "Condition": "MoreThan3AZ",
             "Type": "AWS::EC2::NetworkAclEntry",
             "Properties": {
                 "NetworkAclId": {
@@ -1124,6 +1184,7 @@
             }
         },
         "InboundRDPPrivateNetworkAclEntry2": {
+            "Condition": "MoreThan3AZ",
             "Type": "AWS::EC2::NetworkAclEntry",
             "Properties": {
                 "NetworkAclId": {
@@ -1143,6 +1204,7 @@
             }
         },
         "InboundHTTPPrivateNetworkAclEntry2": {
+            "Condition": "MoreThan3AZ",
             "Type": "AWS::EC2::NetworkAclEntry",
             "Properties": {
                 "NetworkAclId": {
@@ -1162,6 +1224,7 @@
             }
         },
         "OutboundEphemeralPrivateNetworkAclEntry2": {
+            "Condition": "MoreThan3AZ",
             "Type": "AWS::EC2::NetworkAclEntry",
             "Properties": {
                 "NetworkAclId": {
@@ -1179,6 +1242,7 @@
             }
         },
         "PrivateSubnetNetworkAclAssociation2": {
+            "Condition": "MoreThan3AZ",
             "Type": "AWS::EC2::SubnetNetworkAclAssociation",
             "Properties": {
                 "SubnetId": {
@@ -1190,6 +1254,7 @@
             }
         },
         "PrivateSubnetRouteTableAssociation2": {
+            "Condition": "MoreThan3AZ",
             "Type": "AWS::EC2::SubnetRouteTableAssociation",
             "Properties": {
                 "SubnetId": {
@@ -1255,7 +1320,7 @@
                 }
             }
         },
-        "Inbound0MSSQLPrivateNetworkAclEntry1": {
+        "Inbound0MySQLPrivateNetworkAclEntry1": {
             "Type": "AWS::EC2::NetworkAclEntry",
             "Properties": {
                 "NetworkAclId": {
@@ -1274,7 +1339,7 @@
                 "RuleNumber": "1001"
             }
         },
-        "Inbound1MSSQLPrivateNetworkAclEntry1": {
+        "Inbound1MySQLPrivateNetworkAclEntry1": {
             "Type": "AWS::EC2::NetworkAclEntry",
             "Properties": {
                 "NetworkAclId": {
@@ -1410,7 +1475,7 @@
                 ],
                 "AvailabilityZone": {
                     "Fn::Select": [
-                        2,
+                        0,
                         {
                             "Fn::GetAZs": ""
                         }
@@ -1444,7 +1509,7 @@
                 }
             }
         },
-        "Inbound0MSSQLPrivateNetworkAclEntry0": {
+        "Inbound0MySQLPrivateNetworkAclEntry0": {
             "Type": "AWS::EC2::NetworkAclEntry",
             "Properties": {
                 "NetworkAclId": {
@@ -1463,7 +1528,7 @@
                 "RuleNumber": "1000"
             }
         },
-        "Inbound1MSSQLPrivateNetworkAclEntry0": {
+        "Inbound1MySQLPrivateNetworkAclEntry0": {
             "Type": "AWS::EC2::NetworkAclEntry",
             "Properties": {
                 "NetworkAclId": {
@@ -1718,7 +1783,8 @@
                 }
             }
         },
-        "Outbound0MSSQLPublicNetworkAclEntry2": {
+        "Outbound0MySQLPublicNetworkAclEntry2": {
+            "Condition": "MoreThan3AZ",
             "Type": "AWS::EC2::NetworkAclEntry",
             "Properties": {
                 "NetworkAclId": {
@@ -1737,7 +1803,8 @@
                 "RuleNumber": "1202"
             }
         },
-        "Outbound1MSSQLPublicNetworkAclEntry2": {
+        "Outbound1MySQLPublicNetworkAclEntry2": {
+            "Condition": "MoreThan3AZ",
             "Type": "AWS::EC2::NetworkAclEntry",
             "Properties": {
                 "NetworkAclId": {
@@ -1757,6 +1824,7 @@
             }
         },
         "OutboundSSHPublicNetworkAclEntry2": {
+            "Condition": "MoreThan3AZ",
             "Type": "AWS::EC2::NetworkAclEntry",
             "Properties": {
                 "NetworkAclId": {
@@ -1776,6 +1844,7 @@
             }
         },
         "PublicSubnetNetworkAclAssociation2": {
+            "Condition": "MoreThan3AZ",
             "Type": "AWS::EC2::SubnetNetworkAclAssociation",
             "Properties": {
                 "SubnetId": {
@@ -1787,6 +1856,7 @@
             }
         },
         "PublicSubnet2": {
+            "Condition": "MoreThan3AZ",
             "Type": "AWS::EC2::Subnet",
             "Properties": {
                 "VpcId": {
@@ -1807,7 +1877,7 @@
                 ],
                 "AvailabilityZone": {
                     "Fn::Select": [
-                        0,
+                        2,
                         {
                             "Fn::GetAZs": ""
                         }
@@ -1816,6 +1886,7 @@
             }
         },
         "DMZRouteTable2": {
+            "Condition": "MoreThan3AZ",
             "Type": "AWS::EC2::RouteTable",
             "Properties": {
                 "VpcId": {
@@ -1830,6 +1901,7 @@
             }
         },
         "PublicRoute2": {
+            "Condition": "MoreThan3AZ",
             "Type": "AWS::EC2::Route",
             "Properties": {
                 "RouteTableId": {
@@ -1842,6 +1914,7 @@
             }
         },
         "PublicSubnetRouteTableAssociation2": {
+            "Condition": "MoreThan3AZ",
             "Type": "AWS::EC2::SubnetRouteTableAssociation",
             "Properties": {
                 "SubnetId": {
@@ -1852,7 +1925,7 @@
                 }
             }
         },
-        "Outbound0MSSQLPublicNetworkAclEntry1": {
+        "Outbound0MySQLPublicNetworkAclEntry1": {
             "Type": "AWS::EC2::NetworkAclEntry",
             "Properties": {
                 "NetworkAclId": {
@@ -1871,7 +1944,7 @@
                 "RuleNumber": "1201"
             }
         },
-        "Outbound1MSSQLPublicNetworkAclEntry1": {
+        "Outbound1MySQLPublicNetworkAclEntry1": {
             "Type": "AWS::EC2::NetworkAclEntry",
             "Properties": {
                 "NetworkAclId": {
@@ -1986,7 +2059,7 @@
                 }
             }
         },
-        "Outbound0MSSQLPublicNetworkAclEntry0": {
+        "Outbound0MySQLPublicNetworkAclEntry0": {
             "Type": "AWS::EC2::NetworkAclEntry",
             "Properties": {
                 "NetworkAclId": {
@@ -2005,7 +2078,7 @@
                 "RuleNumber": "1200"
             }
         },
-        "Outbound1MSSQLPublicNetworkAclEntry0": {
+        "Outbound1MySQLPublicNetworkAclEntry0": {
             "Type": "AWS::EC2::NetworkAclEntry",
             "Properties": {
                 "NetworkAclId": {
@@ -2075,7 +2148,7 @@
                 ],
                 "AvailabilityZone": {
                     "Fn::Select": [
-                        2,
+                        0,
                         {
                             "Fn::GetAZs": ""
                         }

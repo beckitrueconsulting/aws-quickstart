@@ -8,12 +8,10 @@
             "Default": "vpc-xxxxxxxx",
             "AllowedPattern": "vpc-[0-9a-z]{8}"
         },
-
         "AutoScaledInstanceSecurityGroup": {
             "Description": "For DBVPCSecurityGroups, enter existing security group to associate with DB ",
             "Type": "String"
         },
-
         "Subnets": {
             "Type": "List<AWS::EC2::Subnet::Id>",
             "Description": "Atleast two existing Subnets in separate Availability Zones your Virtual Private Cloud (VPC)",
@@ -107,13 +105,13 @@
             "ConstraintDescription": "must begin with a letter and contain only alphanumeric characters."
         },
         "DBMasterUserPassword": {
-            "Default": "admin123456",
             "Description": "The database admin account password",
             "Type": "String",
             "MinLength": "8",
             "MaxLength": "64",
-            "NoEcho": "true",
-            "AllowedPattern": "[a-zA-Z0-9]*",
+            "AllowedPattern": "(?=^.{6,255}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
+            "NoEcho": "True",
+            "Default": "Admin-123456",
             "ConstraintDescription": "Min 8 chars."
         },
         "DBMultiAZ": {
@@ -184,7 +182,7 @@
                     }
                 ],
                 "MultiAZ": {
-                	"Ref": "DBMultiAZ"
+                    "Ref": "DBMultiAZ"
                 },
                 "Tags": [
                     {

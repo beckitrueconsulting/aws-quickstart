@@ -17,7 +17,6 @@
             "Type": "String",
             "Default": "i2.8xlarge",
             "AllowedValues": [
-                "t1.micro",
                 "t2.micro",
                 "t2.small",
                 "t2.medium",
@@ -64,7 +63,7 @@
         },
         "NotificationEmail": {
             "Description": "Email address to notify if there are any scaling operations [ optional]",
-            "Default": "foobar@example.com",
+            "Default": "",
             "Type": "String"
         },
         "WebServerMinSize": {
@@ -125,7 +124,7 @@
         },
         "BucketNamePrefix": {
             "Description": "Name of bucket to hold magento media assets",
-            "Default": "avumindxdsmagentomedia",
+            "Default": "magentomedia",
             "Type": "String"
         },
         "ExistingIamInstanceProfile": {
@@ -156,7 +155,7 @@
             "Description": "The number of days for which automatic DB snapshots are retained."
         },
         "DBInstanceClass": {
-            "Default": "db.cr1.8xlarge",
+            "Default": "db.m3.2xlarge",
             "Description": "The name of the compute and memory capacity class of the DB instance.",
             "Type": "String",
             "AllowedValues": [
@@ -186,7 +185,7 @@
         },
         "DBName": {
             "Default": "QuickstartMySQLDB",
-            "Description": "Name of MySQL DB for Magento Stack",
+            "Description": "Name of the initial database for the MySQL RDS Instance.",
             "Type": "String",
             "MinLength": "5",
             "MaxLength": "64",
@@ -221,13 +220,13 @@
             "ConstraintDescription": "must begin with a letter and contain only alphanumeric characters."
         },
         "DBMasterUserPassword": {
-            "Default": "admin123456",
             "Description": "The database admin account password",
             "Type": "String",
             "MinLength": "8",
             "MaxLength": "64",
             "NoEcho": "true",
-            "AllowedPattern": "[a-zA-Z0-9]*",
+            "AllowedPattern": "(?=^.{6,255}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
+            "Default": "Admin-123456",
             "ConstraintDescription": "Min 8 chars."
         },
         "DBMultiAZ": {
