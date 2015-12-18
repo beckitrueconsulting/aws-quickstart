@@ -1,6 +1,6 @@
 {
     "AWSTemplateFormatVersion" : "2010-09-09",
-    "Description"              : "(000E) - This template deploys two Exchange Server 2013 CU 7 servers. This template is intended to be installed into an existing VPC that was built using the sample reference architecture titled: \"Implementing Active Directory Domain Services in the AWS Cloud\" **WARNING** This template creates Amazon EC2 Windows instance and related resources. You will be billed for the AWS resources used if you create a stack from this template.",
+    "Description"              : "(000E) - This template deploys two Exchange Server 2013 CU 9 servers. This template is intended to be installed into an existing VPC that was built using the sample reference architecture titled: \"Implementing Active Directory Domain Services in the AWS Cloud\" **WARNING** This template creates Amazon EC2 Windows instance and related resources. You will be billed for the AWS resources used if you create a stack from this template.",
     "Parameters"               : {
         "KeyPairName" : {
             "Description" : "Public/private key pairs allow you to securely connect to your instance after it launches",
@@ -210,31 +210,31 @@
         },
         "AWSRegionArch2AMI"    : {
             "us-east-1" : {
-                "64" : "ami-e171098b"
+                "64" : "ami-e4034a8e"
             },
             "us-west-2" : {
-                "64" : "ami-56544537"
+                "64" : "ami-b25e42d3"
             },
             "us-west-1" : {
-                "64" : "ami-8e345aee"
+                "64" : "ami-a99df5c9"
             },
             "eu-west-1" : {
-                "64" : "ami-8004dcf3"
+                "64" : "ami-1ffa5a6c"
             },
             "eu-central-1" : {
-                "64" : "ami-c9a9baa5"
+                "64" : "ami-c64559aa"
             },
             "ap-southeast-1" : {
-                "64" : "ami-17fb3d74"
+                "64" : "ami-1992517a"
             },
             "ap-northeast-1" : {
-                "64" : "ami-58e8c936"
+                "64" : "ami-fe436b90"
             },
             "sa-east-1"      : {
-                "64" : "ami-6bcb7107"
+                "64" : "ami-0abd3966"
             },
             "ap-southeast-2" : {
-                "64" : "ami-1dcb957e"
+                "64" : "ami-cec69ead"
             }
         }
     },
@@ -600,7 +600,7 @@
                                     "Fn::Join" : [
                                         "",
                                         [
-                                            "powershell.exe -Command c:\\cfn\\scripts\\Download-File.ps1 -Source http://download.microsoft.com/download/F/1/8/F1855E0B-1B90-4E5B-B64E-B5B564D67637/Exchange2013-x64-cu7.exe",
+                                            "powershell.exe -Command c:\\cfn\\scripts\\Download-File.ps1 -Source https://download.microsoft.com/download/C/6/8/C6899C99-F933-4181-9692-17A5BB7F1A4B/Exchange2013-x64-cu9.exe",
                                             " -Destination \\\\",
                                             {
                                                 "Ref" : "ADServerNetBIOSName1"
