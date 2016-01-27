@@ -1,8 +1,8 @@
 # Modify the INPUT fields to set parameter values
 createVPCDevelopment: no
 createVPCManagement: no
-pAppAmi: ami-cf1066aa
-pAppInstanceType: m3.large
+pAppAmi: ami-f0091d91
+pAppInstanceType: t2.micro
 pAppLogsBucketName: <INPUT>
 pAppPrivateSubnetACIDR: 10.100.10.0/24
 pAppPrivateSubnetBCIDR: 10.100.11.0/24
@@ -28,14 +28,14 @@ pManagementSubnetBCIDR: 10.10.2.0/24
 pNatInstanceType: t1.micro
 pProductionCIDR: 10.100.0.0/16
 pProductionVPCName: Production
-pRegionAZ1Name: us-east-1a
-pRegionAZ2Name: us-east-1c
-pRegionDomain: us-east-1.compute.internal
+pRegionAZ1Name: us-west-2a
+pRegionAZ2Name: us-west-2c
+pRegionDomain: us-west-2.compute.internal
 pS3CloudTrailBucketExisting: none
 pS3CloudTrailLocal: none
 pWebContentBucketName: none
-pWebInstanceType: m3.large
-pWebServerAMI: ami-cf1066aa
+pWebInstanceType: t2.micro
+pWebServerAMI: ami-f0091d91
 pNotifyEmail: <INPUT>
 stack1URL: https://s3.amazonaws.com/quickstart-reference/enterprise-accelerator/nist/latest/templates/stack1-access-01.json
 stack2URL: https://s3.amazonaws.com/quickstart-reference/enterprise-accelerator/nist/latest/templates/stack2-network-01.json
